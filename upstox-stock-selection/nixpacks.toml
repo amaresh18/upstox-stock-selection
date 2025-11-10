@@ -1,5 +1,5 @@
-[phases.setup]
-nixPkgs = ["python311", "pip"]
+[providers]
+python = "3.11"
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
