@@ -1,0 +1,17 @@
+@echo off
+REM Batch file to set credentials and run continuous alerts script
+
+echo Setting Upstox API credentials...
+set UPSTOX_API_KEY=e3d3c1d1-5338-4efa-b77f-c83ea604ea43
+set UPSTOX_ACCESS_TOKEN=eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzUUFSVEoiLCJqdGkiOiI2OTEyNDg5YjQ3ODQ3MjdlNWY4YjIyYWIiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2MjgwNTkxNSwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzYyODEyMDAwfQ.EG-kDo3g1G5u5Cl_HrnBo612vvYNwASV8KNZd3XHoiA
+
+echo.
+echo ✅ Credentials set
+echo.
+echo Starting continuous alerts script...
+echo.
+
+python scripts/run_continuous_alerts.py
+
+pause
+
