@@ -272,6 +272,17 @@ class ContinuousAlertMonitor:
         
         print(f"✅ Loaded {len(self.symbols)} symbols")
         
+        # Display list of symbols being monitored
+        print(f"\n📋 Stocks being monitored ({len(self.symbols)} symbols):")
+        # Display in columns for better readability
+        symbols_sorted = sorted(self.symbols)
+        cols = 5  # Number of columns
+        for i in range(0, len(symbols_sorted), cols):
+            row_symbols = symbols_sorted[i:i+cols]
+            # Format with padding for alignment
+            formatted_row = "  ".join(f"{symbol:12s}" for symbol in row_symbols)
+            print(f"   {formatted_row}")
+        
         # Display configuration
         startup_time = datetime.now(self.ist)
         print("\n" + "="*80)
