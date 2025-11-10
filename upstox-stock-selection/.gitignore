@@ -54,3 +54,7 @@ Thumbs.db
 # Project specific
 stock_selection_*.csv
 upstox_data.db
+
+# Upstox token files
+UpstoxTokenGen.txt
+UpstoxTokenGen.*
