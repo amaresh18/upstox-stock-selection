@@ -34,7 +34,8 @@ ENV/
 *~
 
 # Data files
-data/NSE.json
+# Note: data/NSE.json is now committed for Railway deployment
+# data/NSE.json
 data/*.csv
 *.csv
 *.db

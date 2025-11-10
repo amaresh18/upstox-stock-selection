@@ -1,0 +1,712 @@
+[
+  {
+    "tradingsymbol": "ABB",
+    "instrument_key": "NSE_EQ|INE117A01022",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "ABB",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "ADANIENSOL",
+    "instrument_key": "NSE_EQ|INE931S01010",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "ADANIENSOL",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "ADANIENT",
+    "instrument_key": "NSE_EQ|INE423A01024",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "ADANIGREEN",
+    "instrument_key": "NSE_EQ|INE364U01010",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "ADANIPORTS",
+    "instrument_key": "NSE_EQ|INE742F01042",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "ADANIPOWER",
+    "instrument_key": "NSE_EQ|INE814H01029",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "ADANIPOWER",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "AMBUJACEM",
+    "instrument_key": "NSE_EQ|INE079A01024",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "APOLLOHOSP",
+    "instrument_key": "NSE_EQ|INE437A01024",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "APOLLOHOSP",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "ASIANPAINT",
+    "instrument_key": "NSE_EQ|INE021A01026",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "AXISBANK",
+    "instrument_key": "NSE_EQ|INE238A01034",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "BAJAJ-AUTO",
+    "instrument_key": "NSE_EQ|INE917I01010",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "BAJAJ-AUTO",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "BAJAJFINSV",
+    "instrument_key": "NSE_EQ|INE918I01026",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "BAJAJHFL",
+    "instrument_key": "NSE_EQ|INE377Y01014",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "BAJAJHFL",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "BAJAJHLDNG",
+    "instrument_key": "NSE_EQ|INE118A01012",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "BAJFINANCE",
+    "instrument_key": "NSE_EQ|INE296A01032",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "BAJFINANCE",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "BANKBARODA",
+    "instrument_key": "NSE_EQ|INE028A01039",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "BEL",
+    "instrument_key": "NSE_EQ|INE263A01024",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "BEL",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "BHARTIARTL",
+    "instrument_key": "NSE_EQ|INE397D01024",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "BOSCHLTD",
+    "instrument_key": "NSE_EQ|INE323A01026",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "BOSCHLTD",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "BPCL",
+    "instrument_key": "NSE_EQ|INE029A01011",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "BRITANNIA",
+    "instrument_key": "NSE_EQ|INE216A01030",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "CANBK",
+    "instrument_key": "NSE_EQ|INE476A01022",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "CANBK",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "CGPOWER",
+    "instrument_key": "NSE_EQ|INE067A01029",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "CGPOWER",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "CHOLAFIN",
+    "instrument_key": "NSE_EQ|INE121A01024",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "CHOLAFIN",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "CIPLA",
+    "instrument_key": "NSE_EQ|INE059A01026",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "COALINDIA",
+    "instrument_key": "NSE_EQ|INE522F01014",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "DIVISLAB",
+    "instrument_key": "NSE_EQ|INE361B01024",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "DLF",
+    "instrument_key": "NSE_EQ|INE271C01023",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "DLF",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "DMART",
+    "instrument_key": "NSE_EQ|INE192R01011",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "DMART",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "DRREDDY",
+    "instrument_key": "NSE_EQ|INE089A01031",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "DRREDDY",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "EICHERMOT",
+    "instrument_key": "NSE_EQ|INE066A01021",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "EICHERMOT",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "ENRIN",
+    "instrument_key": "NSE_EQ|INE1NPP01017",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "ENRIN",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "ETERNAL",
+    "instrument_key": "NSE_EQ|INE758T01015",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "ETERNAL",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "GAIL",
+    "instrument_key": "NSE_EQ|INE129A01019",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "GAIL",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "GODREJCP",
+    "instrument_key": "NSE_EQ|INE102D01028",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "GODREJCP",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "GRASIM",
+    "instrument_key": "NSE_EQ|INE047A01021",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "HAL",
+    "instrument_key": "NSE_EQ|INE066F01020",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "HAL",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "HAVELLS",
+    "instrument_key": "NSE_EQ|INE176B01034",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "HCLTECH",
+    "instrument_key": "NSE_EQ|INE860A01027",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "HDFCBANK",
+    "instrument_key": "NSE_EQ|INE040A01034",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "HDFCLIFE",
+    "instrument_key": "NSE_EQ|INE795G01014",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "HINDALCO",
+    "instrument_key": "NSE_EQ|INE038A01020",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "HINDUNILVR",
+    "instrument_key": "NSE_EQ|INE030A01027",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "HINDUNILVR",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "HINDZINC",
+    "instrument_key": "NSE_EQ|INE267A01025",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "HINDZINC",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "HYUNDAI",
+    "instrument_key": "NSE_EQ|INE0V6F01027",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "HYUNDAI",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "ICICIBANK",
+    "instrument_key": "NSE_EQ|INE090A01021",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "ICICIGI",
+    "instrument_key": "NSE_EQ|INE765G01017",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "ICICIGI",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "INDHOTEL",
+    "instrument_key": "NSE_EQ|INE053A01029",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "INDHOTEL",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "INDIGO",
+    "instrument_key": "NSE_EQ|INE646L01027",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "INFY",
+    "instrument_key": "NSE_EQ|INE009A01021",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "IOC",
+    "instrument_key": "NSE_EQ|INE242A01010",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "IOC",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "IRFC",
+    "instrument_key": "NSE_EQ|INE053F01010",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "IRFC",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "ITC",
+    "instrument_key": "NSE_EQ|INE154A01025",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "JINDALSTEL",
+    "instrument_key": "NSE_EQ|INE749A01030",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "JINDALSTEL",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "JIOFIN",
+    "instrument_key": "NSE_EQ|INE758E01017",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "JIOFIN",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "JSWENERGY",
+    "instrument_key": "NSE_EQ|INE121E01018",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "JSWENERGY",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "JSWSTEEL",
+    "instrument_key": "NSE_EQ|INE019A01038",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "KOTAKBANK",
+    "instrument_key": "NSE_EQ|INE237A01028",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "LICI",
+    "instrument_key": "NSE_EQ|INE0J1Y01017",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "LICI",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "LODHA",
+    "instrument_key": "NSE_EQ|INE670K01029",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "LODHA",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "LT",
+    "instrument_key": "NSE_EQ|INE018A01030",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "LTIM",
+    "instrument_key": "NSE_EQ|INE214T01019",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "LTIM",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "M&M",
+    "instrument_key": "NSE_EQ|INE101A01026",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "MARUTI",
+    "instrument_key": "NSE_EQ|INE585B01010",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "MAXHEALTH",
+    "instrument_key": "NSE_EQ|INE027H01010",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "MAXHEALTH",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "MAZDOCK",
+    "instrument_key": "NSE_EQ|INE249Z01020",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "MAZDOCK",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "MOTHERSON",
+    "instrument_key": "NSE_EQ|INE775A01035",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "MOTHERSON",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "NAUKRI",
+    "instrument_key": "NSE_EQ|INE663F01032",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "NAUKRI",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "NESTLEIND",
+    "instrument_key": "NSE_EQ|INE239A01024",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "NESTLEIND",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "NTPC",
+    "instrument_key": "NSE_EQ|INE733E01010",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "ONGC",
+    "instrument_key": "NSE_EQ|INE213A01029",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "PFC",
+    "instrument_key": "NSE_EQ|INE134E01011",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "PFC",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "PIDILITIND",
+    "instrument_key": "NSE_EQ|INE318A01026",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "PIDILITIND",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "PNB",
+    "instrument_key": "NSE_EQ|INE160A01022",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "PNB",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "POWERGRID",
+    "instrument_key": "NSE_EQ|INE752E01010",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "RECLTD",
+    "instrument_key": "NSE_EQ|INE020B01018",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "RECLTD",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "RELIANCE",
+    "instrument_key": "NSE_EQ|INE002A01018",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "SBILIFE",
+    "instrument_key": "NSE_EQ|INE123W01016",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "SBILIFE",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "SBIN",
+    "instrument_key": "NSE_EQ|INE062A01020",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "SHREECEM",
+    "instrument_key": "NSE_EQ|INE070A01015",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "SHRIRAMFIN",
+    "instrument_key": "NSE_EQ|INE721A01047",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "SHRIRAMFIN",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "SIEMENS",
+    "instrument_key": "NSE_EQ|INE003A01024",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "SOLARINDS",
+    "instrument_key": "NSE_EQ|INE343H01029",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "SOLARINDS",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "SUNPHARMA",
+    "instrument_key": "NSE_EQ|INE044A01036",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "TATACONSUM",
+    "instrument_key": "NSE_EQ|INE192A01025",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "TATAPOWER",
+    "instrument_key": "NSE_EQ|INE245A01021",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "TATAPOWER",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "TATASTEEL",
+    "instrument_key": "NSE_EQ|INE081A01020",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "TATASTEEL",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "TCS",
+    "instrument_key": "NSE_EQ|INE467B01029",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "TECHM",
+    "instrument_key": "NSE_EQ|INE669C01036",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "TITAN",
+    "instrument_key": "NSE_EQ|INE280A01028",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "TMPV",
+    "instrument_key": "NSE_EQ|INE155A01022",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "TMPV",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "TORNTPHARM",
+    "instrument_key": "NSE_EQ|INE685A01028",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "TORNTPHARM",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "TRENT",
+    "instrument_key": "NSE_EQ|INE849A01020",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "TRENT",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "TVSMOTOR",
+    "instrument_key": "NSE_EQ|INE494B01023",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "TVSMOTOR",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "ULTRACEMCO",
+    "instrument_key": "NSE_EQ|INE481G01011",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "UNITDSPR",
+    "instrument_key": "NSE_EQ|INE854D01024",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "UNITDSPR",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "VBL",
+    "instrument_key": "NSE_EQ|INE200M01039",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "VBL",
+    "isin": null
+  },
+  {
+    "tradingsymbol": "VEDL",
+    "instrument_key": "NSE_EQ|INE205A01025",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "WIPRO",
+    "instrument_key": "NSE_EQ|INE075A01022",
+    "exchange": "NSE",
+    "instrument_type": "EQ"
+  },
+  {
+    "tradingsymbol": "ZYDUSLIFE",
+    "instrument_key": "NSE_EQ|INE010B01027",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "name": "ZYDUSLIFE",
+    "isin": null
+  }
+]
