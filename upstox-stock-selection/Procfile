@@ -1,2 +1,2 @@
-worker: ./start.sh
+worker: python scripts/run_continuous_alerts.py
 
