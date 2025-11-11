@@ -21,6 +21,7 @@ import os
 import sys
 import asyncio
 import argparse
+import pandas as pd
 from datetime import datetime, date
 from pytz import timezone
 
@@ -154,6 +155,21 @@ async def run_realtime_alerts(target_date: date = None):
     
     # Analyze symbols - returns (summary_df, alerts_df)
     summary_df, alerts_df = await selector.analyze_symbols(symbols, max_workers=max_workers, days=days, target_date=target_date)
+    
+    # Filter alerts to show only today's alerts (if no target_date specified)
+    if not target_date:
+        today = datetime.now(ist).date()
+        if not alerts_df.empty and 'timestamp' in alerts_df.columns:
+            # Convert timestamp to date if it's not already
+            alerts_df['alert_date'] = pd.to_datetime(alerts_df['timestamp']).dt.date
+            today_alerts = alerts_df[alerts_df['alert_date'] == today].copy()
+            
+            if not today_alerts.empty:
+                print(f"\n📅 Today's Alerts ({today.strftime('%Y-%m-%d')}): {len(today_alerts)} alerts")
+                alerts_df = today_alerts.drop(columns=['alert_date'])
+            else:
+                print(f"\n⚠️  No alerts for today ({today.strftime('%Y-%m-%d')})")
+                print(f"   Showing all alerts from historical data: {len(alerts_df)} alerts")
     
     # Display results
     print("\n" + "="*80)

@@ -630,12 +630,15 @@ class UpstoxStockSelector:
         start_i = int(max(LOOKBACK_SWING, VOL_WINDOW)) + 1
         
         # End index: len(df) - HOLD_BARS to ensure we have enough bars for exit
+        # But allow checking up to the last bar if it's today's data (for real-time alerts)
         end_i = len(df) - HOLD_BARS
+        end_i_realtime = len(df)  # Allow checking all bars for real-time alerts
         
-        if start_i >= end_i:
+        if start_i >= end_i_realtime:
             return alerts  # Not enough data
         
-        for i in range(start_i, end_i):
+        # Use end_i_realtime to include today's data, but handle exit price calculation
+        for i in range(start_i, end_i_realtime):
             prev_close = df['close'].iloc[i-1]
             curr_close = df['close'].iloc[i]
             
@@ -668,11 +671,20 @@ class UpstoxStockSelector:
             crosses_above = (prev_close <= swing_high_prev) and (curr_close > swing_high_prev)
             
             if crosses_above and (vol_ratio >= VOL_MULT) and strong_bull:
-                # Entry: next bar's open (i+1)
-                entry_price = df['open'].iloc[i+1]
-                # Exit: close after HOLD_BARS bars (i+HOLD_BARS)
-                exit_price = df['close'].iloc[i+HOLD_BARS]
-                pnl_pct = ((exit_price - entry_price) / entry_price) * 100.0
+                # Entry: next bar's open (i+1) if available, else current close
+                if i + 1 < len(df):
+                    entry_price = df['open'].iloc[i+1]
+                else:
+                    entry_price = curr_close
+                
+                # Exit: close after HOLD_BARS bars (i+HOLD_BARS) if available, else current close
+                if i + HOLD_BARS < len(df):
+                    exit_price = df['close'].iloc[i+HOLD_BARS]
+                    pnl_pct = ((exit_price - entry_price) / entry_price) * 100.0
+                else:
+                    # For real-time alerts without enough bars, use current close as exit
+                    exit_price = curr_close
+                    pnl_pct = 0.0  # P&L not calculated yet
                 
                 alerts.append({
                     'symbol': symbol,
@@ -694,12 +706,21 @@ class UpstoxStockSelector:
             crosses_below = (prev_close >= swing_low_prev) and (curr_close < swing_low_prev)
             
             if crosses_below and (vol_ratio >= VOL_MULT) and strong_bear:
-                # Entry: next bar's open (i+1)
-                entry_price = df['open'].iloc[i+1]
-                # Exit: close after HOLD_BARS bars (i+HOLD_BARS)
-                exit_price = df['close'].iloc[i+HOLD_BARS]
-                # For breakdown: (entry - exit) / entry * 100
-                pnl_pct = ((entry_price - exit_price) / entry_price) * 100.0
+                # Entry: next bar's open (i+1) if available, else current close
+                if i + 1 < len(df):
+                    entry_price = df['open'].iloc[i+1]
+                else:
+                    entry_price = curr_close
+                
+                # Exit: close after HOLD_BARS bars (i+HOLD_BARS) if available, else current close
+                if i + HOLD_BARS < len(df):
+                    exit_price = df['close'].iloc[i+HOLD_BARS]
+                    # For breakdown: (entry - exit) / entry * 100
+                    pnl_pct = ((entry_price - exit_price) / entry_price) * 100.0
+                else:
+                    # For real-time alerts without enough bars, use current close as exit
+                    exit_price = curr_close
+                    pnl_pct = 0.0  # P&L not calculated yet
                 
                 alerts.append({
                     'symbol': symbol,
