@@ -340,6 +340,32 @@ class UpstoxStockSelector:
             if before_dedup != after_dedup:
                 print(f"  Removed {before_dedup - after_dedup} duplicate timestamps for {symbol}")
             
+            # Filter out incomplete candles (current hour's candle that hasn't completed yet)
+            # A candle at hour H completes at hour H+1 (e.g., 9:15 candle completes at 10:15)
+            # So if current time is 10:15:30, we should exclude the 10:15 candle (still forming)
+            if not target_date:  # Only for real-time (not historical backtesting)
+                now = datetime.now(self.ist)
+                current_hour = now.hour
+                current_minute = now.minute
+                current_second = now.second
+                
+                # Market hours: 9:15 AM - 3:30 PM IST
+                market_hours = [9, 10, 11, 12, 13, 14, 15]
+                
+                # Determine the cutoff time for incomplete candles
+                # If it's 10:15:30, exclude candles >= 10:15 (current hour)
+                # If it's 10:20, exclude candles >= 10:15 (current hour)
+                if current_hour in market_hours:
+                    # Exclude current hour's candle (it's still forming)
+                    cutoff_time = now.replace(minute=15, second=0, microsecond=0)
+                    # Only filter if we're past 15 minutes of current hour
+                    if current_minute > 15 or (current_minute == 15 and current_second >= 30):
+                        before_filter = len(df)
+                        df = df[df.index < cutoff_time]
+                        after_filter = len(df)
+                        if before_filter != after_filter:
+                            print(f"  Filtered out {before_filter - after_filter} incomplete candle(s) for {symbol} (current hour: {current_hour}:15)")
+            
             # Ensure we have enough data points (at least 70 bars for calculations)
             if len(df) < VOL_WINDOW:
                 print(f"Insufficient data for {symbol}: {len(df)} bars (need at least {VOL_WINDOW})")
