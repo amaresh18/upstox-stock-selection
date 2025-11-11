@@ -28,6 +28,7 @@ from src.config.settings import (
 )
 
 # Page config with premium iOS-inspired design
+# Mobile-optimized: sidebar collapses on small screens
 st.set_page_config(
     page_title="Upstox Stock Selection",
     page_icon="📈",
@@ -36,7 +37,7 @@ st.set_page_config(
     menu_items={
         'Get Help': None,
         'Report a bug': None,
-        'About': "Premium Stock Selection System with iOS-inspired Design"
+        'About': "Premium Stock Selection System with iOS-inspired Design - Mobile Optimized"
     }
 )
 
@@ -75,6 +76,16 @@ def inject_custom_css():
 
 # Inject CSS
 inject_custom_css()
+
+# Add mobile viewport and PWA meta tags for app-like experience
+st.markdown("""
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#007AFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Stock Selection">
+<link rel="manifest" href="/manifest.json">
+""", unsafe_allow_html=True)
 
 # Default values (current system values)
 DEFAULT_VALUES = {
