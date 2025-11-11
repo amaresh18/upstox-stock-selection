@@ -658,6 +658,11 @@ class UpstoxStockSelector:
             # Skip if we don't have valid indicator values
             if (pd.isna(swing_high_prev) or pd.isna(swing_low_prev) or 
                 pd.isna(vol_ratio) or pd.isna(range_val)):
+                # Debug: Log why we're skipping (only for today's bars in real-time mode)
+                if not require_exit_price and i >= len(df) - 2:  # Last 2 bars (9:15 and 10:15)
+                    ts_str = str(timestamp)
+                    if '2025-11-11' in ts_str or (hasattr(timestamp, 'date') and timestamp.date() == datetime.now(self.ist).date()):
+                        print(f"  Skipping {symbol} at {timestamp}: swing_high={swing_high_prev}, swing_low={swing_low_prev}, vol_ratio={vol_ratio}")
                 continue
             
             # Strong bullish candle: (close > open) OR (range > avg_range with NaN check)
@@ -673,7 +678,15 @@ class UpstoxStockSelector:
             # Breakout condition: crosses above PREVIOUS bar's swing high
             crosses_above = (prev_close <= swing_high_prev) and (curr_close > swing_high_prev)
             
-            if crosses_above and (vol_ratio >= VOL_MULT) and strong_bull:
+            # For real-time alerts on the current/last bar, use a lower volume threshold
+            # because the current hour's volume might still be accumulating
+            vol_threshold_breakout = VOL_MULT
+            if not require_exit_price and i >= len(df) - 1:
+                # For the current hour, use a lower threshold (1.2x instead of 1.6x)
+                # This accounts for volume still accumulating during the current hour
+                vol_threshold_breakout = max(1.2, VOL_MULT * 0.75)  # 75% of normal threshold
+            
+            if crosses_above and (vol_ratio >= vol_threshold_breakout) and strong_bull:
                 # Entry: next bar's open (i+1) if available, else current close
                 if i + 1 < len(df):
                     entry_price = df['open'].iloc[i+1]
@@ -714,7 +727,15 @@ class UpstoxStockSelector:
             # Breakdown condition: crosses below PREVIOUS bar's swing low
             crosses_below = (prev_close >= swing_low_prev) and (curr_close < swing_low_prev)
             
-            if crosses_below and (vol_ratio >= VOL_MULT) and strong_bear:
+            # For real-time alerts on the current/last bar, use a lower volume threshold
+            # because the current hour's volume might still be accumulating
+            vol_threshold = VOL_MULT
+            if not require_exit_price and i >= len(df) - 1:
+                # For the current hour, use a lower threshold (1.2x instead of 1.6x)
+                # This accounts for volume still accumulating during the current hour
+                vol_threshold = max(1.2, VOL_MULT * 0.75)  # 75% of normal threshold
+            
+            if crosses_below and (vol_ratio >= vol_threshold) and strong_bear:
                 # Entry: next bar's open (i+1) if available, else current close
                 if i + 1 < len(df):
                     entry_price = df['open'].iloc[i+1]
