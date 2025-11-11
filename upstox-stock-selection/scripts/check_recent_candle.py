@@ -168,6 +168,16 @@ async def check_recent_candle():
         else:
             print(f"\n⚠️  No alerts for {most_recent_candle_hour}:15 candle")
             alerts_df = pd.DataFrame()
+            
+            # Send Telegram notification for no alerts
+            if telegram.enabled:
+                no_alerts_msg = f"⚪ *No Alerts Detected*\n\n"
+                no_alerts_msg += f"📊 Candle: {most_recent_candle_hour}:15\n"
+                no_alerts_msg += f"⏰ Completed at: {completed_at}\n"
+                no_alerts_msg += f"📅 Date: {now.strftime('%Y-%m-%d')}\n\n"
+                no_alerts_msg += f"No stocks met the selection criteria for this candle."
+                await telegram.send_message(no_alerts_msg)
+                print(f"   📱 Sent 'no alerts' notification to Telegram")
     
     # Display results
     print("\n" + "="*80)

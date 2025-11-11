@@ -237,6 +237,17 @@ class ContinuousAlertMonitor:
                 
                 if recent_alerts_df.empty:
                     print(f"   ⚪ No alerts for {most_recent_candle_hour}:15 candle")
+                    
+                    # Send Telegram notification for no alerts
+                    if self.telegram.enabled:
+                        no_alerts_msg = f"⚪ *No Alerts Detected*\n\n"
+                        no_alerts_msg += f"📊 Candle: {most_recent_candle_hour}:15\n"
+                        no_alerts_msg += f"⏰ Completed at: {completed_at}\n"
+                        no_alerts_msg += f"📅 Date: {check_time.strftime('%Y-%m-%d')}\n\n"
+                        no_alerts_msg += f"No stocks met the selection criteria for this candle."
+                        await self.telegram.send_message(no_alerts_msg)
+                        print(f"   📱 Sent 'no alerts' notification to Telegram")
+                    
                     return
                 
                 print(f"   ✅ Found {len(recent_alerts_df)} alert(s) for {most_recent_candle_hour}:15 candle")
