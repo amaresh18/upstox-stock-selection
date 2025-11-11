@@ -37,27 +37,27 @@ st.set_page_config(
     menu_items={
         'Get Help': None,
         'Report a bug': None,
-        'About': "Professional Stock Selection System - Zerodha/BookMyShow Inspired Design"
+        'About': "Stock Selection System - Zerodha Kite Inspired Design"
     }
 )
 
-# Inject custom CSS for professional trading platform design
+# Inject custom CSS for Zerodha Kite-inspired design
 def inject_custom_css():
-    """Inject custom CSS for professional Zerodha/BookMyShow-inspired design."""
-    css_file_path = os.path.join(os.path.dirname(__file__), 'assets', 'css', 'professional.css')
+    """Inject custom CSS matching Zerodha Kite's exact design system."""
+    css_file_path = os.path.join(os.path.dirname(__file__), 'assets', 'css', 'zerodha-kite.css')
     if os.path.exists(css_file_path):
         with open(css_file_path, 'r') as f:
             css = f.read()
         st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
     else:
-        # Fallback inline CSS
+        # Fallback inline CSS - Kite Style
         st.markdown("""
         <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #F5F7FA; }
-        .main .block-container { padding: 2rem 1.5rem; max-width: 1400px; background: #F5F7FA; }
-        h1 { font-size: 2.5rem; font-weight: 700; color: #1E293B; letter-spacing: -0.02em; }
-        .stButton > button { background: #2962FF; border-radius: 8px; font-weight: 600; padding: 0.75rem 1.5rem; }
-        .stButton > button:hover { background: #1E4ED8; transform: translateY(-1px); }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #F5F7FA; font-size: 14px; }
+        .main .block-container { padding: 1.5rem; max-width: 1400px; background: #F5F7FA; }
+        h1 { font-size: 1.875rem; font-weight: 600; color: #1E293B; letter-spacing: -0.01em; }
+        .stButton > button { background: #2962FF; border-radius: 6px; font-weight: 500; padding: 0.75rem 1.25rem; font-size: 0.875rem; }
+        .stButton > button:hover { background: #1E4ED8; }
         [data-testid="stSidebar"] { background: #FFFFFF; border-right: 1px solid #E2E8F0; }
         </style>
         """, unsafe_allow_html=True)
@@ -141,47 +141,47 @@ def load_default_values():
     st.success("✅ Default values loaded! All parameters reset to system defaults.")
 
 def main():
-    """Main Streamlit app with professional trading platform design."""
+    """Main Streamlit app with Zerodha Kite-inspired design."""
     initialize_session_state()
     
-    # Professional Header - Zerodha/BookMyShow Style
+    # Kite-Style Header - Clean and Minimal
     st.markdown("""
-    <div style="background: linear-gradient(135deg, #2962FF 0%, #1E4ED8 100%); 
-                border-radius: 16px; padding: 3rem 2.5rem; margin-bottom: 2rem; 
-                box-shadow: 0 10px 25px -5px rgba(41, 98, 255, 0.3);">
-        <h1 style="font-size: 2.75rem; font-weight: 700; color: #FFFFFF; margin: 0 0 0.5rem 0; 
-                   letter-spacing: -0.02em; line-height: 1.2;">
-            Stock Selection System
-        </h1>
-        <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.125rem; margin: 0; 
-                  font-weight: 400;">
-            Professional algorithmic trading platform with advanced analysis
+    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; 
+                padding: 2rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <h1 style="font-size: 1.875rem; font-weight: 600; color: #1E293B; margin: 0; 
+                       letter-spacing: -0.01em; line-height: 1.3;">
+                Stock Selection
+            </h1>
+        </div>
+        <p style="color: #64748B; font-size: 0.875rem; margin: 0; line-height: 1.5;">
+            Professional algorithmic trading platform for identifying high-probability opportunities
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Sidebar for configuration - Professional Trading Platform Style
+    # Sidebar for configuration - Kite Style (Clean, Minimal)
     with st.sidebar:
         st.markdown("""
-        <div style="padding: 0 0 1.5rem 0; border-bottom: 2px solid #E2E8F0; margin-bottom: 1.5rem;">
-            <h2 style="font-size: 1.5rem; font-weight: 700; color: #1E293B; margin: 0; 
+        <div style="padding: 0 0 1.5rem 0; border-bottom: 1px solid #F1F5F9; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0 0 0.5rem 0; 
                        letter-spacing: -0.01em;">
                 Configuration
             </h2>
-            <p style="color: #64748B; font-size: 0.875rem; margin: 0.5rem 0 0 0;">
-                Customize your analysis parameters
+            <p style="color: #64748B; font-size: 0.875rem; margin: 0; line-height: 1.5;">
+                Customize analysis parameters
             </p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Group 1: Time Settings - Professional Card
+        # Group 1: Time Settings - Kite Style Card
         st.markdown("""
-        <div style="background: #FFFFFF; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; 
-                    border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <h3 style="font-size: 1rem; font-weight: 600; color: #1E293B; margin: 0 0 1rem 0; 
-                       text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">
-                ⏱️ Time Settings
-            </h3>
+        <div style="background: #FFFFFF; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; 
+                    border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+            <div style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
+                       text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+                Time Settings
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -201,12 +201,12 @@ def main():
             # Update params with widget value (sync back)
             st.session_state.params['interval'] = interval
 
-        # Recent candle selector (dynamic based on interval)
+        # Recent candle selector (dynamic based on interval) - Kite Style
         st.markdown("""
-        <div style="margin-top: 1.25rem; margin-bottom: 0.75rem;">
-            <label style="font-size: 0.875rem; font-weight: 600; color: #64748B; 
+        <div style="margin-top: 1rem; margin-bottom: 0.5rem;">
+            <label style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
                          text-transform: uppercase; letter-spacing: 0.05em; display: block;">
-                🕒 Recent Candle
+                Recent Candle
             </label>
         </div>
         """, unsafe_allow_html=True)
@@ -251,12 +251,12 @@ def main():
             times = [t for t in times if t < end_dt]
             return times
 
-        # Date picker for historical analysis
+        # Date picker for historical analysis - Kite Style
         st.markdown("""
-        <div style="margin-top: 1.5rem; margin-bottom: 0.75rem;">
-            <label style="font-size: 0.875rem; font-weight: 600; color: #64748B; 
+        <div style="margin-top: 1rem; margin-bottom: 0.5rem;">
+            <label style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
                          text-transform: uppercase; letter-spacing: 0.05em; display: block;">
-                📅 Analysis Date
+                Analysis Date
             </label>
         </div>
         """, unsafe_allow_html=True)
@@ -325,14 +325,14 @@ def main():
         # Save to session state
         st.session_state.selected_candle_dt = selected_candle_dt
 
-        # Group 2: Results Scope - Professional Card
+        # Group 2: Results Scope - Kite Style Card
         st.markdown("""
-        <div style="background: #FFFFFF; border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0 1rem 0; 
-                    border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <h3 style="font-size: 1rem; font-weight: 600; color: #1E293B; margin: 0 0 1rem 0; 
-                       text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">
-                📊 Results Scope
-            </h3>
+        <div style="background: #FFFFFF; border-radius: 8px; padding: 1rem; margin: 1rem 0; 
+                    border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+            <div style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
+                       text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+                Results Scope
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -362,14 +362,14 @@ def main():
             if include_historical and only_recent_candle:
                 st.info("ℹ️ Historical results enabled. Recent-candle filter will be ignored.")
         
-        # Group 3: Trading Parameters - Professional Card
+        # Group 3: Trading Parameters - Kite Style Card
         st.markdown("""
-        <div style="background: #FFFFFF; border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0 1rem 0; 
-                    border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <h3 style="font-size: 1rem; font-weight: 600; color: #1E293B; margin: 0 0 1rem 0; 
-                       text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">
-                📈 Trading Parameters
-            </h3>
+        <div style="background: #FFFFFF; border-radius: 8px; padding: 1rem; margin: 1rem 0; 
+                    border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+            <div style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
+                       text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+                Trading Parameters
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -424,14 +424,14 @@ def main():
             )
             st.session_state.params['hold_bars'] = hold_bars
         
-        # Group 4: Data & Performance - Professional Card
+        # Group 4: Data & Performance - Kite Style Card
         st.markdown("""
-        <div style="background: #FFFFFF; border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0 1rem 0; 
-                    border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <h3 style="font-size: 1rem; font-weight: 600; color: #1E293B; margin: 0 0 1rem 0; 
-                       text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">
-                ⚡ Data & Performance
-            </h3>
+        <div style="background: #FFFFFF; border-radius: 8px; padding: 1rem; margin: 1rem 0; 
+                    border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+            <div style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
+                       text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+                Data & Performance
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -479,28 +479,28 @@ def main():
                 # Params are already synced from widgets above, just confirm
                 st.success("✅ Configuration saved! All parameters are ready to use.")
     
-    # Main content area - Professional Trading Platform Style
+    # Main content area - Kite Style (Clean, Minimal)
     st.markdown("""
-    <div style="margin: 0 0 2rem 0;">
-        <h2 style="font-size: 2rem; font-weight: 700; color: #1E293B; margin: 0 0 0.5rem 0; 
+    <div style="margin: 0 0 1.5rem 0;">
+        <h2 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0 0 0.5rem 0; 
                    letter-spacing: -0.01em;">
             Analysis Dashboard
         </h2>
-        <p style="color: #64748B; font-size: 1rem; margin: 0;">
+        <p style="color: #64748B; font-size: 0.875rem; margin: 0; line-height: 1.5;">
             Configure parameters and execute comprehensive stock analysis
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # API Credentials Card - Professional Style
+    # API Credentials Card - Kite Style
     st.markdown("""
-    <div style="background: #FFFFFF; border-radius: 12px; padding: 1.75rem; margin-bottom: 1.5rem; 
-                border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="display: flex; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1rem; 
-                    border-bottom: 2px solid #F1F5F9;">
-            <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0; 
+    <div style="background: #FFFFFF; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; 
+                border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+        <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; 
+                    border-bottom: 1px solid #F1F5F9;">
+            <h3 style="font-size: 1rem; font-weight: 600; color: #1E293B; margin: 0; 
                        letter-spacing: -0.01em;">
-                🔑 API Credentials
+                API Credentials
             </h3>
         </div>
     </div>
@@ -528,15 +528,15 @@ def main():
                 placeholder="Enter your access token"
             )
     
-    # Current Configuration Card - Professional Style
+    # Current Configuration Card - Kite Style
     st.markdown("""
-    <div style="background: #FFFFFF; border-radius: 12px; padding: 1.75rem; margin-bottom: 1.5rem; 
-                border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="display: flex; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1rem; 
-                    border-bottom: 2px solid #F1F5F9;">
-            <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0; 
+    <div style="background: #FFFFFF; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; 
+                border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
+        <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; 
+                    border-bottom: 1px solid #F1F5F9;">
+            <h3 style="font-size: 1rem; font-weight: 600; color: #1E293B; margin: 0; 
                        letter-spacing: -0.01em;">
-                📋 Current Configuration
+                Current Configuration
             </h3>
         </div>
     </div>
@@ -556,9 +556,9 @@ def main():
             ])
             st.dataframe(config_df, use_container_width=True, hide_index=True)
     
-    # Action Buttons - Professional Trading Platform Style
+    # Action Buttons - Kite Style
     st.markdown("""
-    <div style="margin: 2rem 0 1.5rem 0;">
+    <div style="margin: 1.5rem 0;">
     </div>
     """, unsafe_allow_html=True)
     
@@ -706,15 +706,15 @@ def main():
                     st.code(traceback.format_exc())
                     st.session_state.running = False
     
-    # Display results - Professional Trading Platform Style
+    # Display results - Kite Style (Clean, Minimal)
     if st.session_state.results:
         st.markdown("""
-        <div style="margin: 3rem 0 2rem 0; padding-bottom: 1.5rem; border-bottom: 2px solid #E2E8F0;">
-            <h2 style="font-size: 2rem; font-weight: 700; color: #1E293B; margin: 0 0 0.5rem 0; 
+        <div style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 1px solid #F1F5F9;">
+            <h2 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0 0 0.5rem 0; 
                        letter-spacing: -0.01em;">
                 Analysis Results
             </h2>
-            <p style="color: #64748B; font-size: 1rem; margin: 0;">
+            <p style="color: #64748B; font-size: 0.875rem; margin: 0; line-height: 1.5;">
                 Review your comprehensive stock selection analysis
             </p>
         </div>
@@ -777,14 +777,15 @@ def main():
             alerts_df = filtered_alerts
         
         # If user wants only the recent closed candle (intraday decision view),
-        # show professional trading platform style alerts
+        # show Kite-style alerts (clean, minimal, professional)
         if not include_historical and only_recent_candle:
             st.markdown("""
-            <div style="margin: 2rem 0 1.5rem 0;">
-                <h3 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0 0 0.5rem 0;">
-                    🔔 Intraday Alerts
+            <div style="margin: 1.5rem 0 1rem 0;">
+                <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0 0 0.5rem 0; 
+                           letter-spacing: -0.01em;">
+                    Intraday Alerts
                 </h3>
-                <p style="color: #64748B; font-size: 0.875rem; margin: 0;">
+                <p style="color: #64748B; font-size: 0.875rem; margin: 0; line-height: 1.5;">
                     Recent closed candle alerts sorted by volume ratio (highest first)
                 </p>
             </div>
@@ -797,7 +798,7 @@ def main():
                 if 'vol_ratio' in alerts_df.columns:
                     alerts_df = alerts_df.sort_values('vol_ratio', ascending=False)
 
-                # Render professional trading platform alert cards
+                # Render Kite-style alert cards (clean, minimal, professional)
                 for idx, r in alerts_df.iterrows():
                     symbol = r.get('symbol', 'N/A')
                     signal_type = r.get('signal_type', 'N/A')
@@ -807,49 +808,47 @@ def main():
                     swing_low = r.get('swing_low', None)
                     ts = r.get('timestamp', '')
                     
-                    # Professional color scheme
-                    border_color = "#4CAF50" if signal_type == 'BREAKOUT' else "#F44336"
+                    # Kite color scheme (subtle, professional)
+                    border_color = "#00C853" if signal_type == 'BREAKOUT' else "#F44336"
                     bg_color = "#FFFFFF"
-                    badge_color = "rgba(76, 175, 80, 0.1)" if signal_type == 'BREAKOUT' else "rgba(244, 67, 54, 0.1)"
-                    text_color = "#4CAF50" if signal_type == 'BREAKOUT' else "#F44336"
+                    badge_bg = "rgba(0, 200, 83, 0.08)" if signal_type == 'BREAKOUT' else "rgba(244, 67, 54, 0.08)"
+                    badge_text = "#00C853" if signal_type == 'BREAKOUT' else "#F44336"
                     
                     # Build alert card
                     if signal_type == 'BREAKOUT':
-                        title = f"{symbol}"
                         signal_badge = "BREAKOUT"
                         level = f"Above ₹{swing_high:.2f}" if swing_high else "N/A"
                     else:
-                        title = f"{symbol}"
                         signal_badge = "BREAKDOWN"
                         level = f"Below ₹{swing_low:.2f}" if swing_low else "N/A"
                     
                     details = []
                     if isinstance(price, (int, float)):
-                        details.append(f"<span style='color: #64748B;'>Price:</span> <strong style='color: #1E293B;'>₹{price:.2f}</strong>")
+                        details.append(f"<span style='color: #64748B; font-size: 0.875rem;'>Price:</span> <span style='color: #1E293B; font-weight: 500; font-size: 0.875rem;'>₹{price:.2f}</span>")
                     if isinstance(vol_ratio, (int, float)):
-                        details.append(f"<span style='color: #64748B;'>Volume:</span> <strong style='color: #1E293B;'>{vol_ratio:.2f}×</strong>")
+                        details.append(f"<span style='color: #64748B; font-size: 0.875rem;'>Volume:</span> <span style='color: #1E293B; font-weight: 500; font-size: 0.875rem;'>{vol_ratio:.2f}×</span>")
                     if ts:
-                        details.append(f"<span style='color: #64748B;'>Time:</span> <strong style='color: #1E293B;'>{ts}</strong>")
+                        details.append(f"<span style='color: #64748B; font-size: 0.875rem;'>Time:</span> <span style='color: #1E293B; font-weight: 500; font-size: 0.875rem;'>{ts}</span>")
                     
                     st.markdown(f"""
-                    <div style="background: {bg_color}; border-left: 4px solid {border_color}; 
-                                border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
-                                border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                                transition: all 0.2s ease;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
-                            <div style="font-weight: 700; font-size: 1.125rem; color: #1E293B; letter-spacing: -0.01em;">
-                                {title}
+                    <div style="background: {bg_color}; border-left: 3px solid {border_color}; 
+                                border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem;
+                                border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+                                transition: all 0.15s ease;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <div style="font-weight: 600; font-size: 1rem; color: #1E293B; letter-spacing: -0.01em;">
+                                {symbol}
                             </div>
-                            <span style="background: {badge_color}; color: {text_color}; padding: 0.25rem 0.75rem; 
-                                        border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; 
+                            <span style="background: {badge_bg}; color: {badge_text}; padding: 0.25rem 0.5rem; 
+                                        border-radius: 4px; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; 
                                         letter-spacing: 0.05em;">
                                 {signal_badge}
                             </span>
                         </div>
-                        <div style="color: #64748B; font-size: 0.875rem; margin-bottom: 0.75rem; font-weight: 500;">
+                        <div style="color: #64748B; font-size: 0.875rem; margin-bottom: 0.75rem; font-weight: 400;">
                             {level}
                         </div>
-                        <div style="color: #1E293B; font-size: 0.875rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                        <div style="color: #1E293B; font-size: 0.875rem; display: flex; gap: 1.25rem; flex-wrap: wrap; font-weight: 400;">
                             {' | '.join(details)}
                         </div>
                     </div>
@@ -866,11 +865,12 @@ def main():
                 )
         else:
             # Full analytical view (includes historical if selected)
-            # Summary statistics - Professional Trading Platform Style
+            # Summary statistics - Kite Style
             st.markdown("""
-            <div style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 2px solid #E2E8F0;">
-                <h3 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0;">
-                    📊 Summary Statistics
+            <div style="margin: 1.5rem 0 1rem 0; padding-bottom: 1rem; border-bottom: 1px solid #F1F5F9;">
+                <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0; 
+                           letter-spacing: -0.01em;">
+                    Summary Statistics
                 </h3>
             </div>
             """, unsafe_allow_html=True)
@@ -898,12 +898,13 @@ def main():
                     avg_win_rate = summary_df['win_rate'].mean() if 'win_rate' in summary_df.columns else 0
                     st.metric("Avg Win Rate", f"{avg_win_rate:.2f}%")
             
-            # Alerts table - Professional Trading Platform Style
+            # Alerts table - Kite Style
             if not alerts_df.empty:
                 st.markdown("""
-                <div style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 2px solid #E2E8F0;">
-                    <h3 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0;">
-                        🔔 Alerts
+                <div style="margin: 1.5rem 0 1rem 0; padding-bottom: 1rem; border-bottom: 1px solid #F1F5F9;">
+                    <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0; 
+                               letter-spacing: -0.01em;">
+                        Alerts
                     </h3>
                 </div>
                 """, unsafe_allow_html=True)
@@ -920,12 +921,13 @@ def main():
                     use_container_width=True
                 )
             
-            # Summary table - Professional Trading Platform Style
+            # Summary table - Kite Style
             if not summary_df.empty:
                 st.markdown("""
-                <div style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 2px solid #E2E8F0;">
-                    <h3 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0;">
-                        📈 Detailed Summary
+                <div style="margin: 1.5rem 0 1rem 0; padding-bottom: 1rem; border-bottom: 1px solid #F1F5F9;">
+                    <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0; 
+                               letter-spacing: -0.01em;">
+                        Detailed Summary
                     </h3>
                 </div>
                 """, unsafe_allow_html=True)
