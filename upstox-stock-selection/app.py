@@ -27,12 +27,54 @@ from src.config.settings import (
     DEFAULT_NSE_JSON_PATH,
 )
 
-# Page config
+# Page config with premium iOS-inspired design
 st.set_page_config(
     page_title="Upstox Stock Selection",
     page_icon="📈",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': "Premium Stock Selection System with iOS-inspired Design"
+    }
 )
+
+# Inject custom CSS for premium iOS design
+def inject_custom_css():
+    """Inject custom CSS for premium iOS-inspired design."""
+    css_file_path = os.path.join(os.path.dirname(__file__), 'assets', 'css', 'custom.css')
+    if os.path.exists(css_file_path):
+        with open(css_file_path, 'r') as f:
+            css = f.read()
+        st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
+    else:
+        # Fallback inline CSS if file doesn't exist
+        st.markdown("""
+        <style>
+        /* Premium iOS-Inspired Design */
+        :root {
+            --primary: #007AFF;
+            --success: #34C759;
+            --warning: #FF9500;
+            --danger: #FF3B30;
+            --bg: #FFFFFF;
+            --surface: #F2F2F7;
+            --text-primary: #000000;
+            --text-secondary: #8E8E93;
+            --border: #E5E5EA;
+        }
+        .main .block-container { padding-top: 2rem; padding-bottom: 2rem; }
+        h1 { font-weight: 700; background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%); 
+             -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stButton > button { border-radius: 12px; font-weight: 600; transition: all 0.2s; }
+        .stButton > button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        [data-testid="stSidebar"] { background: #F2F2F7; }
+        </style>
+        """, unsafe_allow_html=True)
+
+# Inject CSS
+inject_custom_css()
 
 # Default values (current system values)
 DEFAULT_VALUES = {
@@ -100,32 +142,68 @@ def load_default_values():
     st.success("✅ Default values loaded! All parameters reset to system defaults.")
 
 def main():
-    """Main Streamlit app."""
+    """Main Streamlit app with premium iOS-inspired design."""
     initialize_session_state()
     
-    st.title("📈 Upstox Stock Selection System")
-    st.markdown("---")
+    # Premium Header with gradient
+    st.markdown("""
+    <div style="padding: 2rem 0 1rem 0;">
+        <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem; 
+                   background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+                   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                   background-clip: text;">
+            Stock Selection
+        </h1>
+        <p style="color: #8E8E93; font-size: 1.1rem; margin-top: 0;">
+            Advanced algorithmic trading system with real-time analysis
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Sidebar for configuration
+    # Sidebar for configuration - Premium iOS Style
     with st.sidebar:
-        st.header("⚙️ Configuration")
+        st.markdown("""
+        <div style="padding: 1rem 0;">
+            <h2 style="font-size: 1.5rem; font-weight: 600; color: #000000; margin-bottom: 1.5rem;">
+                ⚙️ Configuration
+            </h2>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Time Interval
-        # Get current interval from params (will be updated by Load Defaults)
-        current_interval = st.session_state.params.get('interval', DEFAULT_VALUES['interval'])
-        interval_index = INTERVALS.index(current_interval) if current_interval in INTERVALS else 5
-        interval = st.selectbox(
-            "Time Interval",
-            options=INTERVALS,
-            index=interval_index,
-            key="interval_select",
-            help="Candle interval for analysis (1m, 5m, 10m, 15m, 30m, 1h, 2h, 4h, 1d)"
-        )
-        # Update params with widget value (sync back)
-        st.session_state.params['interval'] = interval
+        # Group 1: Time Settings - iOS Style Card
+        with st.container():
+            st.markdown("""
+            <div style="background: #FFFFFF; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
+                        border: 1px solid #E5E5EA; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                <h3 style="font-size: 1.1rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
+                    ⏱️ Time Settings
+                </h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Time Interval
+            # Get current interval from params (will be updated by Load Defaults)
+            current_interval = st.session_state.params.get('interval', DEFAULT_VALUES['interval'])
+            interval_index = INTERVALS.index(current_interval) if current_interval in INTERVALS else 5
+            interval = st.selectbox(
+                "Time Interval",
+                options=INTERVALS,
+                index=interval_index,
+                key="interval_select",
+                help="Candle interval for analysis (1m, 5m, 10m, 15m, 30m, 1h, 2h, 4h, 1d)"
+            )
+            # Update params with widget value (sync back)
+            st.session_state.params['interval'] = interval
 
         # Recent candle selector (dynamic based on interval)
-        st.markdown("### 🕒 Recent Candle (Today)")
+        st.markdown("""
+        <div style="margin-top: 1.5rem; margin-bottom: 0.5rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 600; color: #8E8E93; text-transform: uppercase; 
+                       letter-spacing: 0.5px;">
+                🕒 Recent Candle
+            </h4>
+        </div>
+        """, unsafe_allow_html=True)
         from datetime import timedelta, time as dtime
         from pytz import timezone as tz
         ist = tz("Asia/Kolkata")
@@ -168,7 +246,14 @@ def main():
             return times
 
         # Date picker for historical analysis (comes first so candle times can use it)
-        st.markdown("### 📅 Analysis Date")
+        st.markdown("""
+        <div style="margin-top: 1.5rem; margin-bottom: 0.5rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 600; color: #8E8E93; text-transform: uppercase; 
+                       letter-spacing: 0.5px;">
+                📅 Analysis Date
+            </h4>
+        </div>
+        """, unsafe_allow_html=True)
         # Get default value from session state (set by Load Defaults)
         use_specific_date_default = st.session_state.get('use_specific_date', False)
         use_specific_date = st.checkbox(
@@ -234,108 +319,142 @@ def main():
         # Save to session state
         st.session_state.selected_candle_dt = selected_candle_dt
 
-        # Controls for output scope
-        st.markdown("### 📊 Results Scope")
-        # Get default values from session state (set by Load Defaults)
-        only_recent_candle_default = st.session_state.get('only_recent_candle', True)
-        only_recent_candle = st.checkbox(
-            "Show only selected recent closed candle",
-            value=only_recent_candle_default,
-            key="only_recent_candle_check",
-            help="When checked, results are filtered to the chosen recent candle only"
-        )
+        # Group 2: Results Scope - iOS Style Card
+        with st.container():
+            st.markdown("""
+            <div style="background: #FFFFFF; border-radius: 12px; padding: 1rem; margin: 1.5rem 0 1rem 0; 
+                        border: 1px solid #E5E5EA; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                <h3 style="font-size: 1.1rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
+                    📊 Results Scope
+                </h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Get default values from session state (set by Load Defaults)
+            only_recent_candle_default = st.session_state.get('only_recent_candle', True)
+            only_recent_candle = st.checkbox(
+                "Show only selected recent closed candle",
+                value=only_recent_candle_default,
+                key="only_recent_candle_check",
+                help="When checked, results are filtered to the chosen recent candle only"
+            )
+            
+            include_historical_default = st.session_state.get('include_historical', False)
+            include_historical = st.checkbox(
+                "Include historical results (entire period)",
+                value=include_historical_default,
+                key="include_historical_check",
+                help="When checked, shows all alerts across the selected historical period"
+            )
+            
+            # Save to session state
+            st.session_state.only_recent_candle = only_recent_candle
+            st.session_state.include_historical = include_historical
+            
+            if include_historical and only_recent_candle:
+                st.info("ℹ️ Historical results enabled. Recent-candle filter will be ignored.")
         
-        include_historical_default = st.session_state.get('include_historical', False)
-        include_historical = st.checkbox(
-            "Include historical results (entire period)",
-            value=include_historical_default,
-            key="include_historical_check",
-            help="When checked, shows all alerts across the selected historical period"
-        )
+        # Group 3: Trading Parameters - iOS Style Card
+        with st.container():
+            st.markdown("""
+            <div style="background: #FFFFFF; border-radius: 12px; padding: 1rem; margin: 1.5rem 0 1rem 0; 
+                        border: 1px solid #E5E5EA; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                <h3 style="font-size: 1.1rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
+                    📈 Trading Parameters
+                </h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Lookback Swing
+            lookback_swing_default = int(st.session_state.params.get('lookback_swing', DEFAULT_VALUES['lookback_swing']))
+            lookback_swing = st.number_input(
+                "Lookback Swing (Bars)",
+                min_value=1,
+                max_value=100,
+                value=lookback_swing_default,
+                key="lookback_swing_input",
+                help="Number of bars for swing high/low calculation"
+            )
+            st.session_state.params['lookback_swing'] = lookback_swing
+            
+            # Volume Window
+            vol_window_default = int(st.session_state.params.get('vol_window', DEFAULT_VALUES['vol_window']))
+            vol_window = st.number_input(
+                "Volume Window (Bars)",
+                min_value=1,
+                max_value=500,
+                value=vol_window_default,
+                key="vol_window_input",
+                help="Number of bars for average volume calculation (e.g., 70 = 10 days * 7 bars/day for 1h)"
+            )
+            st.session_state.params['vol_window'] = vol_window
+            
+            # Volume Multiplier
+            vol_mult_default = float(st.session_state.params.get('vol_mult', DEFAULT_VALUES['vol_mult']))
+            vol_mult = st.number_input(
+                "Volume Multiplier",
+                min_value=0.1,
+                max_value=10.0,
+                value=vol_mult_default,
+                step=0.1,
+                key="vol_mult_input",
+                help="Volume spike threshold (e.g., 1.6 = 1.6x average volume)"
+            )
+            st.session_state.params['vol_mult'] = vol_mult
+            
+            # Hold Bars
+            hold_bars_default = int(st.session_state.params.get('hold_bars', DEFAULT_VALUES['hold_bars']))
+            hold_bars = st.number_input(
+                "Hold Bars",
+                min_value=1,
+                max_value=100,
+                value=hold_bars_default,
+                key="hold_bars_input",
+                help="Number of bars to hold position for P&L calculation"
+            )
+            st.session_state.params['hold_bars'] = hold_bars
         
-        # Save to session state
-        st.session_state.only_recent_candle = only_recent_candle
-        st.session_state.include_historical = include_historical
+        # Group 4: Data & Performance - iOS Style Card
+        with st.container():
+            st.markdown("""
+            <div style="background: #FFFFFF; border-radius: 12px; padding: 1rem; margin: 1.5rem 0 1rem 0; 
+                        border: 1px solid #E5E5EA; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                <h3 style="font-size: 1.1rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
+                    ⚡ Data & Performance
+                </h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Historical Days
+            historical_days_default = int(st.session_state.params.get('historical_days', DEFAULT_VALUES['historical_days']))
+            historical_days = st.number_input(
+                "Historical Days",
+                min_value=1,
+                max_value=365,
+                value=historical_days_default,
+                key="historical_days_input",
+                help="Number of days of historical data to fetch"
+            )
+            st.session_state.params['historical_days'] = historical_days
+            
+            # Max Workers
+            max_workers_default = int(st.session_state.params.get('max_workers', DEFAULT_VALUES['max_workers']))
+            max_workers = st.number_input(
+                "Max Workers (Parallel)",
+                min_value=1,
+                max_value=50,
+                value=max_workers_default,
+                key="max_workers_input",
+                help="Number of parallel workers for analysis"
+            )
+            st.session_state.params['max_workers'] = max_workers
         
-        if include_historical and only_recent_candle:
-            st.info("Historical results enabled. Recent-candle filter will be ignored.")
+        # Action Buttons - iOS Style
+        st.markdown("""
+        <div style="margin-top: 2rem; margin-bottom: 1rem;">
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Lookback Swing
-        lookback_swing_default = int(st.session_state.params.get('lookback_swing', DEFAULT_VALUES['lookback_swing']))
-        lookback_swing = st.number_input(
-            "Lookback Swing (Bars)",
-            min_value=1,
-            max_value=100,
-            value=lookback_swing_default,
-            key="lookback_swing_input",
-            help="Number of bars for swing high/low calculation"
-        )
-        st.session_state.params['lookback_swing'] = lookback_swing
-        
-        # Volume Window
-        vol_window_default = int(st.session_state.params.get('vol_window', DEFAULT_VALUES['vol_window']))
-        vol_window = st.number_input(
-            "Volume Window (Bars)",
-            min_value=1,
-            max_value=500,
-            value=vol_window_default,
-            key="vol_window_input",
-            help="Number of bars for average volume calculation (e.g., 70 = 10 days * 7 bars/day for 1h)"
-        )
-        st.session_state.params['vol_window'] = vol_window
-        
-        # Volume Multiplier
-        vol_mult_default = float(st.session_state.params.get('vol_mult', DEFAULT_VALUES['vol_mult']))
-        vol_mult = st.number_input(
-            "Volume Multiplier",
-            min_value=0.1,
-            max_value=10.0,
-            value=vol_mult_default,
-            step=0.1,
-            key="vol_mult_input",
-            help="Volume spike threshold (e.g., 1.6 = 1.6x average volume)"
-        )
-        st.session_state.params['vol_mult'] = vol_mult
-        
-        # Hold Bars
-        hold_bars_default = int(st.session_state.params.get('hold_bars', DEFAULT_VALUES['hold_bars']))
-        hold_bars = st.number_input(
-            "Hold Bars",
-            min_value=1,
-            max_value=100,
-            value=hold_bars_default,
-            key="hold_bars_input",
-            help="Number of bars to hold position for P&L calculation"
-        )
-        st.session_state.params['hold_bars'] = hold_bars
-        
-        # Historical Days
-        historical_days_default = int(st.session_state.params.get('historical_days', DEFAULT_VALUES['historical_days']))
-        historical_days = st.number_input(
-            "Historical Days",
-            min_value=1,
-            max_value=365,
-            value=historical_days_default,
-            key="historical_days_input",
-            help="Number of days of historical data to fetch"
-        )
-        st.session_state.params['historical_days'] = historical_days
-        
-        # Max Workers
-        max_workers_default = int(st.session_state.params.get('max_workers', DEFAULT_VALUES['max_workers']))
-        max_workers = st.number_input(
-            "Max Workers (Parallel)",
-            min_value=1,
-            max_value=50,
-            value=max_workers_default,
-            key="max_workers_input",
-            help="Number of parallel workers for analysis"
-        )
-        st.session_state.params['max_workers'] = max_workers
-        
-        st.markdown("---")
-        
-        # Buttons
         col1, col2 = st.columns(2)
         
         with col1:
@@ -348,49 +467,79 @@ def main():
                 # Params are already synced from widgets above, just confirm
                 st.success("✅ Configuration saved! All parameters are ready to use.")
     
-    # Main content area
-    st.header("📊 Stock Selection Analysis")
+    # Main content area - Premium iOS Style
+    st.markdown("""
+    <div style="margin: 2rem 0 1.5rem 0;">
+        <h2 style="font-size: 2rem; font-weight: 700; color: #000000; margin-bottom: 0.5rem;">
+            📊 Analysis Dashboard
+        </h2>
+        <p style="color: #8E8E93; font-size: 1rem;">
+            Configure your parameters and run comprehensive stock analysis
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # API Credentials
-    st.subheader("🔑 API Credentials")
-    col1, col2 = st.columns(2)
+    # API Credentials Card - iOS Style
+    with st.container():
+        st.markdown("""
+        <div style="background: #FFFFFF; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; 
+                    border: 1px solid #E5E5EA; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
+                🔑 API Credentials
+            </h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            api_key = st.text_input(
+                "Upstox API Key",
+                value=os.getenv('UPSTOX_API_KEY', ''),
+                type="default",
+                help="Your Upstox API Key",
+                placeholder="Enter your API key"
+            )
+        
+        with col2:
+            access_token = st.text_input(
+                "Upstox Access Token",
+                value=os.getenv('UPSTOX_ACCESS_TOKEN', ''),
+                type="default",
+                help="Your Upstox Access Token",
+                placeholder="Enter your access token"
+            )
     
-    with col1:
-        api_key = st.text_input(
-            "Upstox API Key",
-            value=os.getenv('UPSTOX_API_KEY', ''),
-            type="default",
-            help="Your Upstox API Key"
-        )
+    # Current Configuration Card - iOS Style
+    with st.container():
+        st.markdown("""
+        <div style="background: #FFFFFF; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; 
+                    border: 1px solid #E5E5EA; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
+                📋 Current Configuration
+            </h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        with st.expander("View Configuration Details", expanded=False):
+            config_df = pd.DataFrame([
+                {"Parameter": "Time Interval", "Value": st.session_state.params['interval']},
+                {"Parameter": "Lookback Swing", "Value": st.session_state.params['lookback_swing']},
+                {"Parameter": "Volume Window", "Value": st.session_state.params['vol_window']},
+                {"Parameter": "Volume Multiplier", "Value": st.session_state.params['vol_mult']},
+                {"Parameter": "Hold Bars", "Value": st.session_state.params['hold_bars']},
+                {"Parameter": "Historical Days", "Value": st.session_state.params['historical_days']},
+                {"Parameter": "Max Workers", "Value": st.session_state.params['max_workers']},
+            ])
+            st.dataframe(config_df, use_container_width=True, hide_index=True)
     
-    with col2:
-        access_token = st.text_input(
-            "Upstox Access Token",
-            value=os.getenv('UPSTOX_ACCESS_TOKEN', ''),
-            type="default",
-            help="Your Upstox Access Token"
-        )
+    # Action Buttons - Premium iOS Style
+    st.markdown("""
+    <div style="margin: 2rem 0;">
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Note: params are already updated in sidebar widgets above
-    # This ensures params are always in sync with UI values
-    
-    # Display current configuration
-    with st.expander("📋 Current Configuration", expanded=False):
-        config_df = pd.DataFrame([
-            {"Parameter": "Time Interval", "Value": st.session_state.params['interval']},
-            {"Parameter": "Lookback Swing", "Value": st.session_state.params['lookback_swing']},
-            {"Parameter": "Volume Window", "Value": st.session_state.params['vol_window']},
-            {"Parameter": "Volume Multiplier", "Value": st.session_state.params['vol_mult']},
-            {"Parameter": "Hold Bars", "Value": st.session_state.params['hold_bars']},
-            {"Parameter": "Historical Days", "Value": st.session_state.params['historical_days']},
-            {"Parameter": "Max Workers", "Value": st.session_state.params['max_workers']},
-        ])
-        st.dataframe(config_df, use_container_width=True, hide_index=True)
-    
-    # Run button
-    st.markdown("---")
-    
-    col1, col2, col3 = st.columns([1, 1, 2])
+    col1, col2, col3 = st.columns([2, 2, 4])
     
     with col1:
         run_button = st.button("🚀 Run Analysis", type="primary", use_container_width=True)
@@ -400,7 +549,7 @@ def main():
     
     if clear_button:
         st.session_state.results = None
-        st.success("Results cleared!")
+        st.success("✅ Results cleared!")
         st.rerun()
     
     # Run analysis
@@ -534,10 +683,18 @@ def main():
                     st.code(traceback.format_exc())
                     st.session_state.running = False
     
-    # Display results
+    # Display results - Premium iOS Style
     if st.session_state.results:
-        st.markdown("---")
-        st.header("📊 Results")
+        st.markdown("""
+        <div style="margin: 3rem 0 1.5rem 0;">
+            <h2 style="font-size: 2rem; font-weight: 700; color: #000000; margin-bottom: 0.5rem;">
+                📊 Analysis Results
+            </h2>
+            <p style="color: #8E8E93; font-size: 1rem;">
+                Review your stock selection analysis results
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
         
         results = st.session_state.results
         summary_df = results['summary']
@@ -598,17 +755,26 @@ def main():
         # If user wants only the recent closed candle (intraday decision view),
         # show a compact, trader-focused panel like Telegram notifications
         if not include_historical and only_recent_candle:
-            st.subheader("🔔 Intraday Alerts (Recent Closed Candle)")
+            st.markdown("""
+            <div style="margin: 2rem 0 1rem 0;">
+                <h3 style="font-size: 1.5rem; font-weight: 600; color: #000000;">
+                    🔔 Intraday Alerts
+                </h3>
+                <p style="color: #8E8E93; font-size: 0.9rem;">
+                    Recent closed candle alerts sorted by volume ratio
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
             
             if alerts_df.empty:
-                st.info("No alerts for the selected candle.")
+                st.info("ℹ️ No alerts for the selected candle.")
             else:
                 # Sort by volume ratio (highest first) to surface strongest moves
                 if 'vol_ratio' in alerts_df.columns:
                     alerts_df = alerts_df.sort_values('vol_ratio', ascending=False)
 
-                # Render compact notification-style lines
-                for _, r in alerts_df.iterrows():
+                # Render premium iOS-style alert cards
+                for idx, r in alerts_df.iterrows():
                     symbol = r.get('symbol', 'N/A')
                     signal_type = r.get('signal_type', 'N/A')
                     price = r.get('price', None)
@@ -617,36 +783,70 @@ def main():
                     swing_low = r.get('swing_low', None)
                     ts = r.get('timestamp', '')
                     
-                    # Build a concise line
+                    # Determine card color based on signal type
+                    border_color = "#34C759" if signal_type == 'BREAKOUT' else "#FF3B30"
+                    bg_color = "rgba(52, 199, 89, 0.05)" if signal_type == 'BREAKOUT' else "rgba(255, 59, 48, 0.05)"
+                    
+                    # Build alert card
                     if signal_type == 'BREAKOUT':
-                        line = f"🟢 {symbol}: Breakout + Volume Spike — above ₹{swing_high:.2f}"
+                        title = f"🟢 {symbol}: Breakout + Volume Spike"
+                        level = f"Above ₹{swing_high:.2f}" if swing_high else "N/A"
                     else:
-                        line = f"🔴 {symbol}: Breakdown + Volume Spike — below ₹{swing_low:.2f}"
+                        title = f"🔴 {symbol}: Breakdown + Volume Spike"
+                        level = f"Below ₹{swing_low:.2f}" if swing_low else "N/A"
                     
-                    sub = []
+                    details = []
                     if isinstance(price, (int, float)):
-                        sub.append(f"Price: ₹{price:.2f}")
+                        details.append(f"<strong>Price:</strong> ₹{price:.2f}")
                     if isinstance(vol_ratio, (int, float)):
-                        sub.append(f"Vol: {vol_ratio:.2f}×")
+                        details.append(f"<strong>Volume:</strong> {vol_ratio:.2f}×")
                     if ts:
-                        sub.append(f"Time: {ts}")
+                        details.append(f"<strong>Time:</strong> {ts}")
                     
-                    st.markdown(f"- {line}  \n  {' | '.join(sub)}")
+                    st.markdown(f"""
+                    <div style="background: {bg_color}; border-left: 4px solid {border_color}; 
+                                border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                        <div style="font-weight: 600; font-size: 1.1rem; color: #000000; margin-bottom: 0.5rem;">
+                            {title}
+                        </div>
+                        <div style="color: #8E8E93; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                            {level}
+                        </div>
+                        <div style="color: #000000; font-size: 0.85rem;">
+                            {' | '.join(details)}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                # Download current-candle alerts
+                # Download button - iOS Style
                 csv = alerts_df.to_csv(index=False)
                 st.download_button(
                     label="📥 Download These Alerts (CSV)",
                     data=csv,
                     file_name=f"recent_candle_alerts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
+                    mime="text/csv",
+                    use_container_width=True
                 )
         else:
             # Full analytical view (includes historical if selected)
-            # Summary statistics
+            # Summary statistics - Premium iOS Style Cards
+            st.markdown("""
+            <div style="margin: 2rem 0 1rem 0;">
+                <h3 style="font-size: 1.5rem; font-weight: 600; color: #000000;">
+                    📊 Summary Statistics
+                </h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
+                st.markdown("""
+                <div style="background: #FFFFFF; border-radius: 16px; padding: 1.5rem; 
+                            border: 1px solid #E5E5EA; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                </div>
+                """, unsafe_allow_html=True)
                 st.metric("Total Symbols", len(summary_df))
             
             with col2:
@@ -662,32 +862,48 @@ def main():
                     avg_win_rate = summary_df['win_rate'].mean() if 'win_rate' in summary_df.columns else 0
                     st.metric("Avg Win Rate", f"{avg_win_rate:.2f}%")
             
-            # Alerts table
+            # Alerts table - Premium iOS Style
             if not alerts_df.empty:
-                st.subheader("🔔 Alerts")
+                st.markdown("""
+                <div style="margin: 2rem 0 1rem 0;">
+                    <h3 style="font-size: 1.5rem; font-weight: 600; color: #000000;">
+                        🔔 Alerts
+                    </h3>
+                </div>
+                """, unsafe_allow_html=True)
+                
                 st.dataframe(alerts_df, use_container_width=True, height=400)
                 
-                # Download button
+                # Download button - iOS Style
                 csv = alerts_df.to_csv(index=False)
                 st.download_button(
                     label="📥 Download Alerts (CSV)",
                     data=csv,
                     file_name=f"alerts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
+                    mime="text/csv",
+                    use_container_width=True
                 )
             
-            # Summary table
+            # Summary table - Premium iOS Style
             if not summary_df.empty:
-                st.subheader("📈 Summary Statistics")
+                st.markdown("""
+                <div style="margin: 2rem 0 1rem 0;">
+                    <h3 style="font-size: 1.5rem; font-weight: 600; color: #000000;">
+                        📈 Detailed Summary
+                    </h3>
+                </div>
+                """, unsafe_allow_html=True)
+                
                 st.dataframe(summary_df, use_container_width=True, height=400)
                 
-                # Download button
+                # Download button - iOS Style
                 csv = summary_df.to_csv(index=False)
                 st.download_button(
                     label="📥 Download Summary (CSV)",
                     data=csv,
                     file_name=f"summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
+                    mime="text/csv",
+                    use_container_width=True
                 )
 
 if __name__ == "__main__":

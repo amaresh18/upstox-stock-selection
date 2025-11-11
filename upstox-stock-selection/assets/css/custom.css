@@ -1,0 +1,349 @@
+/* Premium iOS-Inspired Design System */
+/* World-class UI with sleek, modern aesthetics */
+
+:root {
+    --primary-color: #007AFF;
+    --primary-hover: #0051D5;
+    --success-color: #34C759;
+    --warning-color: #FF9500;
+    --danger-color: #FF3B30;
+    --background: #FFFFFF;
+    --surface: #F2F2F7;
+    --surface-elevated: #FFFFFF;
+    --text-primary: #000000;
+    --text-secondary: #8E8E93;
+    --border-color: #E5E5EA;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+}
+
+/* Global Styles */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--background);
+    color: var(--text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Main Container */
+.main .block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    max-width: 1200px;
+}
+
+/* iOS-Style Cards */
+.stCard {
+    background: var(--surface-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stCard:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+/* Header Styles */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+    letter-spacing: -0.02em;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #5856D6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Buttons - iOS Style */
+.stButton > button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+}
+
+.stButton > button:hover {
+    background: var(--primary-hover);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.stButton > button:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Primary Button */
+.stButton[kind="primary"] > button {
+    background: var(--primary-color);
+}
+
+.stButton[kind="primary"] > button:hover {
+    background: var(--primary-hover);
+}
+
+/* Secondary Button */
+.stButton:not([kind="primary"]) > button {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.stButton:not([kind="primary"]) > button:hover {
+    background: var(--surface-elevated);
+    border-color: var(--primary-color);
+}
+
+/* Input Fields - iOS Style */
+.stTextInput > div > div > input,
+.stNumberInput > div > div > input,
+.stSelectbox > div > div > select {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 16px;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.stTextInput > div > div > input:focus,
+.stNumberInput > div > div > input:focus,
+.stSelectbox > div > div > select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    outline: none;
+}
+
+/* Checkbox - iOS Style */
+.stCheckbox > label {
+    font-size: 16px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.stCheckbox > label > div[data-baseweb="checkbox"] {
+    border-radius: 6px;
+}
+
+/* Sidebar Styling */
+[data-testid="stSidebar"] {
+    background: var(--surface);
+    border-right: 1px solid var(--border-color);
+}
+
+[data-testid="stSidebar"] .stCard {
+    background: var(--surface-elevated);
+    border: none;
+    box-shadow: none;
+}
+
+/* Metrics - iOS Style */
+[data-testid="stMetricValue"] {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+[data-testid="stMetricLabel"] {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Dataframe Styling */
+.dataframe {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Success/Info/Warning Messages */
+.stSuccess {
+    background: rgba(52, 199, 89, 0.1);
+    border-left: 4px solid var(--success-color);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+.stInfo {
+    background: rgba(0, 122, 255, 0.1);
+    border-left: 4px solid var(--primary-color);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+.stWarning {
+    background: rgba(255, 149, 0, 0.1);
+    border-left: 4px solid var(--warning-color);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+.stError {
+    background: rgba(255, 59, 48, 0.1);
+    border-left: 4px solid var(--danger-color);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+/* Expander - iOS Style */
+.stExpander {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--surface-elevated);
+}
+
+/* Spinner */
+.stSpinner > div {
+    border-color: var(--primary-color);
+}
+
+/* Tabs - iOS Style */
+.stTabs [data-baseweb="tab-list"] {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 4px;
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .main .block-container {
+        padding: 1rem;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    .stCard {
+        padding: var(--spacing-md);
+    }
+    
+    [data-testid="stSidebar"] {
+        width: 100% !important;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Loading States */
+.stSpinner {
+    color: var(--primary-color);
+}
+
+/* Alert Cards */
+.alert-card {
+    background: var(--surface-elevated);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    border-left: 4px solid var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.alert-card.breakout {
+    border-left-color: var(--success-color);
+}
+
+.alert-card.breakdown {
+    border-left-color: var(--danger-color);
+}
+
+/* Premium Gradient Backgrounds */
+.gradient-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Smooth Transitions */
+* {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Focus States */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Disabled States */
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Selection */
+::selection {
+    background: rgba(0, 122, 255, 0.2);
+    color: var(--text-primary);
+}
+
