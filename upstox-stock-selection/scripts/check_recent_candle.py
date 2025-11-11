@@ -137,16 +137,8 @@ async def check_recent_candle():
         days=int(os.getenv('HISTORICAL_DAYS', DEFAULT_HISTORICAL_DAYS))
     )
     
-    # Filter alerts to show only the most recent completed candle
+    # Filter alerts to show ALL completed candles today (not just the most recent)
     if not alerts_df.empty and 'timestamp' in alerts_df.columns:
-        # Filter to alerts from the most recent completed candle hour
-        candle_start_time = now.replace(hour=most_recent_candle_hour, minute=15, second=0, microsecond=0)
-        # For the last candle (15:15), it ends at 15:30, not 16:15
-        if most_recent_candle_hour == 15:
-            candle_end_time = now.replace(hour=15, minute=30, second=0, microsecond=0)
-        else:
-            candle_end_time = now.replace(hour=most_recent_candle_hour+1, minute=15, second=0, microsecond=0)
-        
         alerts_df['alert_time'] = pd.to_datetime(alerts_df['timestamp'])
         
         # Ensure timezone-aware comparison (convert alert_time to IST if needed)
@@ -157,27 +149,51 @@ async def check_recent_candle():
             # Convert to IST if in different timezone
             alerts_df['alert_time'] = alerts_df['alert_time'].dt.tz_convert(ist)
         
-        recent_alerts = alerts_df[
-            (alerts_df['alert_time'] >= candle_start_time) & 
-            (alerts_df['alert_time'] < candle_end_time)
-        ].copy()
+        # Determine all completed candles up to now
+        # A candle at hour H runs from H:15 to (H+1):15 (completes at H+1:15)
+        # Example: 9:15 candle runs from 9:15 to 10:15 (completes at 10:15)
+        completed_candles = []
+        market_hours = [9, 10, 11, 12, 13, 14, 15]
         
-        if not recent_alerts.empty:
-            alerts_df = recent_alerts.drop(columns=['alert_time'])
-            print(f"\n📅 Alerts for {most_recent_candle_hour}:15 candle: {len(alerts_df)} alerts")
-        else:
-            print(f"\n⚠️  No alerts for {most_recent_candle_hour}:15 candle")
-            alerts_df = pd.DataFrame()
+        for hour in market_hours:
+            candle_start = now.replace(hour=hour, minute=15, second=0, microsecond=0)
+            if hour == 15:
+                candle_end = now.replace(hour=15, minute=30, second=0, microsecond=0)
+            else:
+                candle_end = now.replace(hour=hour+1, minute=15, second=0, microsecond=0)
             
-            # Send Telegram notification for no alerts
-            if telegram.enabled:
-                no_alerts_msg = f"⚪ *No Alerts Detected*\n\n"
-                no_alerts_msg += f"📊 Candle: {most_recent_candle_hour}:15\n"
-                no_alerts_msg += f"⏰ Completed at: {completed_at}\n"
-                no_alerts_msg += f"📅 Date: {now.strftime('%Y-%m-%d')}\n\n"
-                no_alerts_msg += f"No stocks met the selection criteria for this candle."
-                await telegram.send_message(no_alerts_msg)
-                print(f"   📱 Sent 'no alerts' notification to Telegram")
+            # Check if this candle has completed (current time is past the end time)
+            if now >= candle_end:
+                completed_candles.append((hour, candle_start, candle_end))
+        
+        print(f"\n📅 Checking all completed candles today: {[f'{h}:15' for h, _, _ in completed_candles]}")
+        
+        # Filter alerts to only include completed candles
+        if completed_candles:
+            # Create a mask for all completed candles
+            mask = pd.Series([False] * len(alerts_df), index=alerts_df.index)
+            for hour, candle_start, candle_end in completed_candles:
+                mask |= ((alerts_df['alert_time'] >= candle_start) & (alerts_df['alert_time'] < candle_end))
+            
+            completed_alerts = alerts_df[mask].copy()
+            
+            if not completed_alerts.empty:
+                # Group by candle hour for reporting (before dropping alert_time)
+                completed_alerts['candle_hour'] = completed_alerts['alert_time'].dt.hour
+                candle_counts = completed_alerts.groupby('candle_hour').size()
+                
+                print(f"\n✅ Found {len(completed_alerts)} total alerts across completed candles:")
+                for hour, count in candle_counts.items():
+                    print(f"   • {hour}:15 candle: {count} alert(s)")
+                
+                # Now drop the temporary columns
+                alerts_df = completed_alerts.drop(columns=['alert_time', 'candle_hour'])
+            else:
+                print(f"\n⚠️  No alerts found in any completed candles today")
+                alerts_df = pd.DataFrame()
+        else:
+            print(f"\n⚠️  No completed candles yet today")
+            alerts_df = pd.DataFrame()
     
     # Display results
     print("\n" + "="*80)
@@ -185,9 +201,19 @@ async def check_recent_candle():
     print("="*80)
     
     if alerts_df.empty:
-        print("\n⚠️  No alerts generated for the most recent completed candle")
+        print("\n⚠️  No alerts generated for any completed candles today")
+        
+        # Send Telegram notification for no alerts (only for most recent candle)
+        if telegram.enabled and most_recent_candle_hour:
+            no_alerts_msg = f"⚪ *No Alerts Detected*\n\n"
+            no_alerts_msg += f"📊 Candle: {most_recent_candle_hour}:15\n"
+            no_alerts_msg += f"⏰ Completed at: {completed_at}\n"
+            no_alerts_msg += f"📅 Date: {now.strftime('%Y-%m-%d')}\n\n"
+            no_alerts_msg += f"No stocks met the selection criteria for this candle."
+            await telegram.send_message(no_alerts_msg)
+            print(f"   📱 Sent 'no alerts' notification to Telegram for {most_recent_candle_hour}:15 candle")
     else:
-        print(f"\n✅ Generated {len(alerts_df)} alerts")
+        print(f"\n✅ Generated {len(alerts_df)} alerts across all completed candles")
         
         # Group by signal type
         breakouts = alerts_df[alerts_df['signal_type'] == 'BREAKOUT']
@@ -196,26 +222,51 @@ async def check_recent_candle():
         print(f"   Breakout alerts: {len(breakouts)}")
         print(f"   Breakdown alerts: {len(breakdowns)}")
         
+        # Add candle hour for grouping (extract from timestamp)
+        alerts_df['alert_time'] = pd.to_datetime(alerts_df['timestamp'])
+        if alerts_df['alert_time'].dt.tz is None:
+            alerts_df['alert_time'] = alerts_df['alert_time'].dt.tz_localize(ist)
+        else:
+            alerts_df['alert_time'] = alerts_df['alert_time'].dt.tz_convert(ist)
+        alerts_df['candle_hour'] = alerts_df['alert_time'].dt.hour
+        
         # Sort alerts by volume ratio (highest first) - for both Telegram and display
         alerts_df_sorted = alerts_df.sort_values('vol_ratio', ascending=False)
         
-        # Send Telegram notifications (in sorted order)
-        if telegram.enabled:
-            print(f"\n📱 Sending Telegram notifications...")
-            alert_dicts = [row.to_dict() for _, row in alerts_df_sorted.iterrows()]
-            sent_count = await telegram.send_alerts_batch(alert_dicts, max_alerts=20)
-            if sent_count > 0:
-                print(f"   ✅ Sent {sent_count} alert(s) to Telegram (sorted by volume ratio)")
+        # Send Telegram notifications ONLY for the most recent completed candle (to avoid duplicate notifications)
+        if telegram.enabled and most_recent_candle_hour:
+            # Filter to only the most recent completed candle for Telegram
+            recent_candle_alerts = alerts_df_sorted[alerts_df_sorted['candle_hour'] == most_recent_candle_hour].copy()
+            
+            if not recent_candle_alerts.empty:
+                print(f"\n📱 Sending Telegram notifications for {most_recent_candle_hour}:15 candle only...")
+                # Remove temporary columns before converting to dict
+                alert_dicts = [row.drop(['alert_time', 'candle_hour']).to_dict() for _, row in recent_candle_alerts.iterrows()]
+                sent_count = await telegram.send_alerts_batch(alert_dicts, max_alerts=20)
+                if sent_count > 0:
+                    print(f"   ✅ Sent {sent_count} alert(s) to Telegram (sorted by volume ratio)")
+            else:
+                # No alerts for most recent candle - send "no alerts" notification
+                no_alerts_msg = f"⚪ *No Alerts Detected*\n\n"
+                no_alerts_msg += f"📊 Candle: {most_recent_candle_hour}:15\n"
+                no_alerts_msg += f"⏰ Completed at: {completed_at}\n"
+                no_alerts_msg += f"📅 Date: {now.strftime('%Y-%m-%d')}\n\n"
+                no_alerts_msg += f"No stocks met the selection criteria for this candle."
+                await telegram.send_message(no_alerts_msg)
+                print(f"   📱 Sent 'no alerts' notification to Telegram for {most_recent_candle_hour}:15 candle")
         
-        # Show all alerts
+        # Show all alerts grouped by candle hour
         print("\n📊 All Alerts (sorted by volume ratio - highest first):")
-        for _, alert in alerts_df_sorted.iterrows():
-            timestamp = alert.get('timestamp', 'N/A')
-            symbol = alert.get('symbol', 'N/A')
-            signal_type = alert.get('signal_type', 'N/A')
-            price = alert.get('price', 0)
-            vol_ratio = alert.get('vol_ratio', 0)
-            print(f"   {timestamp} | {symbol:15} | {signal_type:10} | ₹{price:8.2f} | Vol: {vol_ratio:.2f}x")
+        for candle_hour in sorted(alerts_df_sorted['candle_hour'].unique()):
+            candle_alerts = alerts_df_sorted[alerts_df_sorted['candle_hour'] == candle_hour]
+            print(f"\n   🕐 {candle_hour}:15 Candle ({len(candle_alerts)} alert(s)):")
+            for _, alert in candle_alerts.iterrows():
+                timestamp = alert.get('timestamp', 'N/A')
+                symbol = alert.get('symbol', 'N/A')
+                signal_type = alert.get('signal_type', 'N/A')
+                price = alert.get('price', 0)
+                vol_ratio = alert.get('vol_ratio', 0)
+                print(f"      {timestamp} | {symbol:15} | {signal_type:10} | ₹{price:8.2f} | Vol: {vol_ratio:.2f}x")
     
     print("\n" + "="*80)
     print("✅ Check completed!")
