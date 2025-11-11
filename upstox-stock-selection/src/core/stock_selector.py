@@ -699,15 +699,7 @@ class UpstoxStockSelector:
             # Breakout condition: crosses above PREVIOUS bar's swing high
             crosses_above = (prev_close <= swing_high_prev) and (curr_close > swing_high_prev)
             
-            # For real-time alerts on the current/last bar, use a lower volume threshold
-            # because the current hour's volume might still be accumulating
-            vol_threshold_breakout = VOL_MULT
-            if not require_exit_price and i >= len(df) - 1:
-                # For the current hour, use a lower threshold (1.2x instead of 1.6x)
-                # This accounts for volume still accumulating during the current hour
-                vol_threshold_breakout = max(1.2, VOL_MULT * 0.75)  # 75% of normal threshold
-            
-            if crosses_above and (vol_ratio >= vol_threshold_breakout) and strong_bull:
+            if crosses_above and (vol_ratio >= VOL_MULT) and strong_bull:
                 # Entry: next bar's open (i+1) if available, else current close
                 if i + 1 < len(df):
                     entry_price = df['open'].iloc[i+1]
@@ -748,15 +740,7 @@ class UpstoxStockSelector:
             # Breakdown condition: crosses below PREVIOUS bar's swing low
             crosses_below = (prev_close >= swing_low_prev) and (curr_close < swing_low_prev)
             
-            # For real-time alerts on the current/last bar, use a lower volume threshold
-            # because the current hour's volume might still be accumulating
-            vol_threshold = VOL_MULT
-            if not require_exit_price and i >= len(df) - 1:
-                # For the current hour, use a lower threshold (1.2x instead of 1.6x)
-                # This accounts for volume still accumulating during the current hour
-                vol_threshold = max(1.2, VOL_MULT * 0.75)  # 75% of normal threshold
-            
-            if crosses_below and (vol_ratio >= vol_threshold) and strong_bear:
+            if crosses_below and (vol_ratio >= VOL_MULT) and strong_bear:
                 # Entry: next bar's open (i+1) if available, else current close
                 if i + 1 < len(df):
                     entry_price = df['open'].iloc[i+1]
