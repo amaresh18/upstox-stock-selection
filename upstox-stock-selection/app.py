@@ -878,11 +878,6 @@ def main():
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
-                st.markdown("""
-                <div style="background: #FFFFFF; border-radius: 16px; padding: 1.5rem; 
-                            border: 1px solid #E5E5EA; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                </div>
-                """, unsafe_allow_html=True)
                 st.metric("Total Symbols", len(summary_df))
             
             with col2:
