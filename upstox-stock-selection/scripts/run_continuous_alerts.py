@@ -287,6 +287,48 @@ class ContinuousAlertMonitor:
         startup_time = datetime.now(self.ist)
         print("\n" + "="*80)
         print("MONITORING CONFIGURATION")
+        
+        # Determine the most recent completed hour slot and run immediate check
+        if self.check_after_hour:
+            current_hour = startup_time.hour
+            current_minute = startup_time.minute
+            current_second = startup_time.second
+            
+            # Market hours: 9:15 AM - 3:30 PM IST
+            market_hours = [9, 10, 11, 12, 13, 14, 15]
+            
+            # Find the most recent completed hour slot
+            if current_hour < 9:
+                # Before market opens, no check needed
+                most_recent_slot = None
+            elif current_hour > 15 or (current_hour == 15 and current_minute >= 30):
+                # After market closes, check the last slot (15:15:30)
+                most_recent_slot = startup_time.replace(hour=15, minute=15, second=30, microsecond=0)
+            elif current_minute > 15 or (current_minute == 15 and current_second >= 30):
+                # Current hour has completed, check at :15:30 of current hour
+                most_recent_slot = startup_time.replace(minute=15, second=30, microsecond=0)
+            elif current_hour > 9:
+                # Current hour hasn't completed yet, check previous hour
+                prev_hour = current_hour - 1
+                if prev_hour in market_hours:
+                    most_recent_slot = startup_time.replace(hour=prev_hour, minute=15, second=30, microsecond=0)
+                else:
+                    most_recent_slot = None
+            else:
+                # It's 9:15 or earlier, no previous slot
+                most_recent_slot = None
+            
+            # Run immediate check for most recent slot if it exists and is within last hour
+            if most_recent_slot:
+                time_since_slot = startup_time - most_recent_slot
+                if time_since_slot.total_seconds() <= 3600:  # Within last hour
+                    print(f"\n🚀 Running immediate check for most recent time slot: {most_recent_slot.strftime('%H:%M:%S')}")
+                    print("="*80)
+                    await self.check_for_alerts()
+                    print("\n" + "="*80)
+                    print("✅ Immediate check completed. Continuing with scheduled checks...")
+                    print("="*80)
+        
         print("="*80)
         print(f"🚀 Script started at: {startup_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
         if self.check_after_hour:
