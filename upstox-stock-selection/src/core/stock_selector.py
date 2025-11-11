@@ -658,11 +658,6 @@ class UpstoxStockSelector:
             # Skip if we don't have valid indicator values
             if (pd.isna(swing_high_prev) or pd.isna(swing_low_prev) or 
                 pd.isna(vol_ratio) or pd.isna(range_val)):
-                # Debug: Log why we're skipping (only for today's bars in real-time mode)
-                if not require_exit_price and i >= len(df) - 2:  # Last 2 bars (9:15 and 10:15)
-                    ts_str = str(timestamp)
-                    if '2025-11-11' in ts_str or (hasattr(timestamp, 'date') and timestamp.date() == datetime.now(self.ist).date()):
-                        print(f"  Skipping {symbol} at {timestamp}: swing_high={swing_high_prev}, swing_low={swing_low_prev}, vol_ratio={vol_ratio}")
                 continue
             
             # Strong bullish candle: (close > open) OR (range > avg_range with NaN check)
