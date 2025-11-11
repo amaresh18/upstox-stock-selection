@@ -21,6 +21,7 @@ import os
 import sys
 import asyncio
 import json
+import pandas as pd
 from datetime import datetime, timedelta
 from pytz import timezone
 from pathlib import Path
@@ -162,6 +163,41 @@ class ContinuousAlertMonitor:
             print(f"{'='*80}")
             print(f"[{check_time.strftime('%H:%M:%S')}] Starting alert check...")
             
+            # Determine the most recent completed candle
+            # A candle at hour H completes at hour H+1 (e.g., 9:15 candle completes at 10:15)
+            current_hour = check_time.hour
+            current_minute = check_time.minute
+            current_second = check_time.second
+            market_hours = [9, 10, 11, 12, 13, 14, 15]
+            
+            if current_hour < 9:
+                print(f"   ⚪ Market hasn't opened yet")
+                return
+            elif current_hour > 15 or (current_hour == 15 and current_minute >= 30):
+                # After market closes, check the last slot (15:15, which completed at 15:30)
+                most_recent_candle_hour = 15
+                completed_at = "15:30"
+            elif current_minute > 15 or (current_minute == 15 and current_second >= 30):
+                # Current hour has passed 15 minutes, so previous hour's candle has completed
+                # Example: If it's 10:20, the 9:15 candle (which completed at 10:15) is the most recent
+                most_recent_candle_hour = current_hour - 1
+                completed_at = f"{current_hour}:15"
+            elif current_hour > 9:
+                # Current hour hasn't reached 15 minutes yet
+                # Example: If it's 10:10, the 9:15 candle hasn't completed yet (completes at 10:15)
+                print(f"   ⚪ Current hour ({current_hour}:{current_minute:02d}) hasn't completed yet")
+                print(f"   The {current_hour-1}:15 candle will complete at {current_hour}:15")
+                return
+            else:
+                print(f"   ⚪ It's too early (before 9:15 AM)")
+                return
+            
+            if most_recent_candle_hour not in market_hours:
+                print(f"   ⚪ Invalid candle hour: {most_recent_candle_hour}")
+                return
+            
+            print(f"   📊 Checking for alerts in {most_recent_candle_hour}:15 candle (completed at {completed_at})")
+            
             # Run analysis
             summary_df, alerts_df = await self.selector.analyze_symbols(
                 self.symbols, 
@@ -170,10 +206,43 @@ class ContinuousAlertMonitor:
             )
             
             if alerts_df.empty:
-                print(f"   ⚪ No new alerts at this time")
+                print(f"   ⚪ No alerts at this time")
                 return
             
-            # Find new alerts
+            # Filter alerts to only include the most recent completed candle
+            candle_start_time = check_time.replace(hour=most_recent_candle_hour, minute=15, second=0, microsecond=0)
+            # For the last candle (15:15), it ends at 15:30, not 16:15
+            if most_recent_candle_hour == 15:
+                candle_end_time = check_time.replace(hour=15, minute=30, second=0, microsecond=0)
+            else:
+                candle_end_time = check_time.replace(hour=most_recent_candle_hour+1, minute=15, second=0, microsecond=0)
+            
+            # Convert timestamp column to datetime if needed
+            if 'timestamp' in alerts_df.columns:
+                alerts_df['alert_time'] = pd.to_datetime(alerts_df['timestamp'])
+                
+                # Ensure timezone-aware comparison (convert alert_time to IST if needed)
+                if alerts_df['alert_time'].dt.tz is None:
+                    # If alerts are timezone-naive, assume they're in IST
+                    alerts_df['alert_time'] = alerts_df['alert_time'].dt.tz_localize(self.ist)
+                else:
+                    # Convert to IST if in different timezone
+                    alerts_df['alert_time'] = alerts_df['alert_time'].dt.tz_convert(self.ist)
+                
+                # Filter to only the most recent completed candle
+                recent_alerts_df = alerts_df[
+                    (alerts_df['alert_time'] >= candle_start_time) & 
+                    (alerts_df['alert_time'] < candle_end_time)
+                ].copy()
+                
+                if recent_alerts_df.empty:
+                    print(f"   ⚪ No alerts for {most_recent_candle_hour}:15 candle")
+                    return
+                
+                print(f"   ✅ Found {len(recent_alerts_df)} alert(s) for {most_recent_candle_hour}:15 candle")
+                alerts_df = recent_alerts_df.drop(columns=['alert_time'])
+            
+            # Find new alerts (from the filtered recent candle only)
             new_alerts = []
             new_alert_dicts = []  # For Telegram
             for _, alert in alerts_df.iterrows():
@@ -184,10 +253,19 @@ class ContinuousAlertMonitor:
                     new_alert_dicts.append(alert.to_dict())
             
             if new_alerts:
-                print(f"\n🔔 NEW ALERTS DETECTED: {len(new_alerts)} alerts")
+                # Convert to DataFrame for sorting
+                new_alerts_df = pd.DataFrame(new_alerts)
+                
+                # Sort alerts by volume ratio (highest first)
+                new_alerts_df_sorted = new_alerts_df.sort_values('vol_ratio', ascending=False)
+                
+                # Update new_alert_dicts to match sorted order
+                new_alert_dicts = [row.to_dict() for _, row in new_alerts_df_sorted.iterrows()]
+                
+                print(f"\n🔔 NEW ALERTS DETECTED: {len(new_alerts)} alerts (sorted by volume ratio - highest first)")
                 print("="*80)
                 
-                for alert in new_alerts:
+                for _, alert in new_alerts_df_sorted.iterrows():
                     timestamp = alert.get('timestamp', 'N/A')
                     symbol = alert.get('symbol', 'N/A')
                     signal_type = alert.get('signal_type', 'N/A')
@@ -210,12 +288,12 @@ class ContinuousAlertMonitor:
                     print(f"   Volume: {vol_ratio:.2f}x average")
                     print("-" * 80)
                 
-                # Send Telegram notifications
+                # Send Telegram notifications (in sorted order)
                 if self.telegram.enabled:
                     print(f"\n📱 Sending Telegram notifications...")
                     sent_count = await self.telegram.send_alerts_batch(new_alert_dicts, max_alerts=10)
                     if sent_count > 0:
-                        print(f"   ✅ Sent {sent_count} alert(s) to Telegram")
+                        print(f"   ✅ Sent {sent_count} alert(s) to Telegram (sorted by volume ratio)")
                     else:
                         print(f"   ⚠️  Failed to send Telegram notifications")
                 
@@ -289,6 +367,8 @@ class ContinuousAlertMonitor:
         print("MONITORING CONFIGURATION")
         
         # Determine the most recent completed hour slot and run immediate check
+        # Note: A 9:15 candle runs from 9:15 to 10:15 (completes at 10:15)
+        # So if current time is 10:20, the most recent completed candle is 9:15 (not 10:15)
         if self.check_after_hour:
             current_hour = startup_time.hour
             current_minute = startup_time.minute
@@ -298,17 +378,25 @@ class ContinuousAlertMonitor:
             market_hours = [9, 10, 11, 12, 13, 14, 15]
             
             # Find the most recent completed hour slot
+            # A candle at hour H completes at hour H+1 (e.g., 9:15 candle completes at 10:15)
             if current_hour < 9:
                 # Before market opens, no check needed
                 most_recent_slot = None
             elif current_hour > 15 or (current_hour == 15 and current_minute >= 30):
-                # After market closes, check the last slot (15:15:30)
+                # After market closes, check the last slot (15:15:30, which completed at 15:30)
                 most_recent_slot = startup_time.replace(hour=15, minute=15, second=30, microsecond=0)
             elif current_minute > 15 or (current_minute == 15 and current_second >= 30):
-                # Current hour has completed, check at :15:30 of current hour
-                most_recent_slot = startup_time.replace(minute=15, second=30, microsecond=0)
+                # Current hour has passed 15 minutes, so previous hour's candle has completed
+                # Example: If it's 10:20, the 9:15 candle (which completed at 10:15) is the most recent
+                prev_hour = current_hour - 1
+                if prev_hour in market_hours:
+                    most_recent_slot = startup_time.replace(hour=prev_hour, minute=15, second=30, microsecond=0)
+                else:
+                    most_recent_slot = None
             elif current_hour > 9:
-                # Current hour hasn't completed yet, check previous hour
+                # Current hour hasn't reached 15 minutes yet, check previous hour
+                # Example: If it's 10:10, the 9:15 candle (which completed at 10:15) hasn't completed yet
+                # But if it's 10:14, we're very close, so check 9:15 slot
                 prev_hour = current_hour - 1
                 if prev_hour in market_hours:
                     most_recent_slot = startup_time.replace(hour=prev_hour, minute=15, second=30, microsecond=0)
@@ -322,7 +410,8 @@ class ContinuousAlertMonitor:
             if most_recent_slot:
                 time_since_slot = startup_time - most_recent_slot
                 if time_since_slot.total_seconds() <= 3600:  # Within last hour
-                    print(f"\n🚀 Running immediate check for most recent time slot: {most_recent_slot.strftime('%H:%M:%S')}")
+                    print(f"\n🚀 Running immediate check for most recent completed time slot: {most_recent_slot.strftime('%H:%M:%S')}")
+                    print(f"   (This candle completed at {(most_recent_slot + timedelta(hours=1)).strftime('%H:%M')})")
                     print("="*80)
                     await self.check_for_alerts()
                     print("\n" + "="*80)
