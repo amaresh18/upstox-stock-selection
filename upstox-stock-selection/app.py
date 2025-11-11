@@ -37,40 +37,28 @@ st.set_page_config(
     menu_items={
         'Get Help': None,
         'Report a bug': None,
-        'About': "Premium Stock Selection System with iOS-inspired Design - Mobile Optimized"
+        'About': "Professional Stock Selection System - Zerodha/BookMyShow Inspired Design"
     }
 )
 
-# Inject custom CSS for premium iOS design
+# Inject custom CSS for professional trading platform design
 def inject_custom_css():
-    """Inject custom CSS for premium iOS-inspired design."""
-    css_file_path = os.path.join(os.path.dirname(__file__), 'assets', 'css', 'custom.css')
+    """Inject custom CSS for professional Zerodha/BookMyShow-inspired design."""
+    css_file_path = os.path.join(os.path.dirname(__file__), 'assets', 'css', 'professional.css')
     if os.path.exists(css_file_path):
         with open(css_file_path, 'r') as f:
             css = f.read()
         st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
     else:
-        # Fallback inline CSS if file doesn't exist
+        # Fallback inline CSS
         st.markdown("""
         <style>
-        /* Premium iOS-Inspired Design */
-        :root {
-            --primary: #007AFF;
-            --success: #34C759;
-            --warning: #FF9500;
-            --danger: #FF3B30;
-            --bg: #FFFFFF;
-            --surface: #F2F2F7;
-            --text-primary: #000000;
-            --text-secondary: #8E8E93;
-            --border: #E5E5EA;
-        }
-        .main .block-container { padding-top: 2rem; padding-bottom: 2rem; }
-        h1 { font-weight: 700; background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%); 
-             -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .stButton > button { border-radius: 12px; font-weight: 600; transition: all 0.2s; }
-        .stButton > button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        [data-testid="stSidebar"] { background: #F2F2F7; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #F5F7FA; }
+        .main .block-container { padding: 2rem 1.5rem; max-width: 1400px; background: #F5F7FA; }
+        h1 { font-size: 2.5rem; font-weight: 700; color: #1E293B; letter-spacing: -0.02em; }
+        .stButton > button { background: #2962FF; border-radius: 8px; font-weight: 600; padding: 0.75rem 1.5rem; }
+        .stButton > button:hover { background: #1E4ED8; transform: translateY(-1px); }
+        [data-testid="stSidebar"] { background: #FFFFFF; border-right: 1px solid #E2E8F0; }
         </style>
         """, unsafe_allow_html=True)
 
@@ -153,44 +141,51 @@ def load_default_values():
     st.success("✅ Default values loaded! All parameters reset to system defaults.")
 
 def main():
-    """Main Streamlit app with premium iOS-inspired design."""
+    """Main Streamlit app with professional trading platform design."""
     initialize_session_state()
     
-    # Premium Header with gradient
+    # Professional Header - Zerodha/BookMyShow Style
     st.markdown("""
-    <div style="padding: 2rem 0 1rem 0;">
-        <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem; 
-                   background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
-                   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-                   background-clip: text;">
-            Stock Selection
+    <div style="background: linear-gradient(135deg, #2962FF 0%, #1E4ED8 100%); 
+                border-radius: 16px; padding: 3rem 2.5rem; margin-bottom: 2rem; 
+                box-shadow: 0 10px 25px -5px rgba(41, 98, 255, 0.3);">
+        <h1 style="font-size: 2.75rem; font-weight: 700; color: #FFFFFF; margin: 0 0 0.5rem 0; 
+                   letter-spacing: -0.02em; line-height: 1.2;">
+            Stock Selection System
         </h1>
-        <p style="color: #8E8E93; font-size: 1.1rem; margin-top: 0;">
-            Advanced algorithmic trading system with real-time analysis
+        <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.125rem; margin: 0; 
+                  font-weight: 400;">
+            Professional algorithmic trading platform with advanced analysis
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Sidebar for configuration - Premium iOS Style
+    # Sidebar for configuration - Professional Trading Platform Style
     with st.sidebar:
         st.markdown("""
-        <div style="padding: 1rem 0;">
-            <h2 style="font-size: 1.5rem; font-weight: 600; color: #000000; margin-bottom: 1.5rem;">
-                ⚙️ Configuration
+        <div style="padding: 0 0 1.5rem 0; border-bottom: 2px solid #E2E8F0; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: #1E293B; margin: 0; 
+                       letter-spacing: -0.01em;">
+                Configuration
             </h2>
+            <p style="color: #64748B; font-size: 0.875rem; margin: 0.5rem 0 0 0;">
+                Customize your analysis parameters
+            </p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Group 1: Time Settings - iOS Style Card
+        # Group 1: Time Settings - Professional Card
+        st.markdown("""
+        <div style="background: #FFFFFF; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; 
+                    border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="font-size: 1rem; font-weight: 600; color: #1E293B; margin: 0 0 1rem 0; 
+                       text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">
+                ⏱️ Time Settings
+            </h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
         with st.container():
-            st.markdown("""
-            <div style="background: #FFFFFF; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
-                        border: 1px solid #E5E5EA; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-                <h3 style="font-size: 1.1rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
-                    ⏱️ Time Settings
-                </h3>
-            </div>
-            """, unsafe_allow_html=True)
             
             # Time Interval
             # Get current interval from params (will be updated by Load Defaults)
@@ -208,11 +203,11 @@ def main():
 
         # Recent candle selector (dynamic based on interval)
         st.markdown("""
-        <div style="margin-top: 1.5rem; margin-bottom: 0.5rem;">
-            <h4 style="font-size: 0.95rem; font-weight: 600; color: #8E8E93; text-transform: uppercase; 
-                       letter-spacing: 0.5px;">
+        <div style="margin-top: 1.25rem; margin-bottom: 0.75rem;">
+            <label style="font-size: 0.875rem; font-weight: 600; color: #64748B; 
+                         text-transform: uppercase; letter-spacing: 0.05em; display: block;">
                 🕒 Recent Candle
-            </h4>
+            </label>
         </div>
         """, unsafe_allow_html=True)
         from datetime import timedelta, time as dtime
@@ -256,13 +251,13 @@ def main():
             times = [t for t in times if t < end_dt]
             return times
 
-        # Date picker for historical analysis (comes first so candle times can use it)
+        # Date picker for historical analysis
         st.markdown("""
-        <div style="margin-top: 1.5rem; margin-bottom: 0.5rem;">
-            <h4 style="font-size: 0.95rem; font-weight: 600; color: #8E8E93; text-transform: uppercase; 
-                       letter-spacing: 0.5px;">
+        <div style="margin-top: 1.5rem; margin-bottom: 0.75rem;">
+            <label style="font-size: 0.875rem; font-weight: 600; color: #64748B; 
+                         text-transform: uppercase; letter-spacing: 0.05em; display: block;">
                 📅 Analysis Date
-            </h4>
+            </label>
         </div>
         """, unsafe_allow_html=True)
         # Get default value from session state (set by Load Defaults)
@@ -330,16 +325,18 @@ def main():
         # Save to session state
         st.session_state.selected_candle_dt = selected_candle_dt
 
-        # Group 2: Results Scope - iOS Style Card
+        # Group 2: Results Scope - Professional Card
+        st.markdown("""
+        <div style="background: #FFFFFF; border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0 1rem 0; 
+                    border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="font-size: 1rem; font-weight: 600; color: #1E293B; margin: 0 0 1rem 0; 
+                       text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">
+                📊 Results Scope
+            </h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
         with st.container():
-            st.markdown("""
-            <div style="background: #FFFFFF; border-radius: 12px; padding: 1rem; margin: 1.5rem 0 1rem 0; 
-                        border: 1px solid #E5E5EA; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-                <h3 style="font-size: 1.1rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
-                    📊 Results Scope
-                </h3>
-            </div>
-            """, unsafe_allow_html=True)
             
             # Get default values from session state (set by Load Defaults)
             only_recent_candle_default = st.session_state.get('only_recent_candle', True)
@@ -365,16 +362,18 @@ def main():
             if include_historical and only_recent_candle:
                 st.info("ℹ️ Historical results enabled. Recent-candle filter will be ignored.")
         
-        # Group 3: Trading Parameters - iOS Style Card
+        # Group 3: Trading Parameters - Professional Card
+        st.markdown("""
+        <div style="background: #FFFFFF; border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0 1rem 0; 
+                    border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="font-size: 1rem; font-weight: 600; color: #1E293B; margin: 0 0 1rem 0; 
+                       text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">
+                📈 Trading Parameters
+            </h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
         with st.container():
-            st.markdown("""
-            <div style="background: #FFFFFF; border-radius: 12px; padding: 1rem; margin: 1.5rem 0 1rem 0; 
-                        border: 1px solid #E5E5EA; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-                <h3 style="font-size: 1.1rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
-                    📈 Trading Parameters
-                </h3>
-            </div>
-            """, unsafe_allow_html=True)
             
             # Lookback Swing
             lookback_swing_default = int(st.session_state.params.get('lookback_swing', DEFAULT_VALUES['lookback_swing']))
@@ -425,16 +424,18 @@ def main():
             )
             st.session_state.params['hold_bars'] = hold_bars
         
-        # Group 4: Data & Performance - iOS Style Card
+        # Group 4: Data & Performance - Professional Card
+        st.markdown("""
+        <div style="background: #FFFFFF; border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0 1rem 0; 
+                    border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="font-size: 1rem; font-weight: 600; color: #1E293B; margin: 0 0 1rem 0; 
+                       text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">
+                ⚡ Data & Performance
+            </h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
         with st.container():
-            st.markdown("""
-            <div style="background: #FFFFFF; border-radius: 12px; padding: 1rem; margin: 1.5rem 0 1rem 0; 
-                        border: 1px solid #E5E5EA; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-                <h3 style="font-size: 1.1rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
-                    ⚡ Data & Performance
-                </h3>
-            </div>
-            """, unsafe_allow_html=True)
             
             # Historical Days
             historical_days_default = int(st.session_state.params.get('historical_days', DEFAULT_VALUES['historical_days']))
@@ -478,28 +479,34 @@ def main():
                 # Params are already synced from widgets above, just confirm
                 st.success("✅ Configuration saved! All parameters are ready to use.")
     
-    # Main content area - Premium iOS Style
+    # Main content area - Professional Trading Platform Style
     st.markdown("""
-    <div style="margin: 2rem 0 1.5rem 0;">
-        <h2 style="font-size: 2rem; font-weight: 700; color: #000000; margin-bottom: 0.5rem;">
-            📊 Analysis Dashboard
+    <div style="margin: 0 0 2rem 0;">
+        <h2 style="font-size: 2rem; font-weight: 700; color: #1E293B; margin: 0 0 0.5rem 0; 
+                   letter-spacing: -0.01em;">
+            Analysis Dashboard
         </h2>
-        <p style="color: #8E8E93; font-size: 1rem;">
-            Configure your parameters and run comprehensive stock analysis
+        <p style="color: #64748B; font-size: 1rem; margin: 0;">
+            Configure parameters and execute comprehensive stock analysis
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # API Credentials Card - iOS Style
-    with st.container():
-        st.markdown("""
-        <div style="background: #FFFFFF; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; 
-                    border: 1px solid #E5E5EA; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-            <h3 style="font-size: 1.25rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
+    # API Credentials Card - Professional Style
+    st.markdown("""
+    <div style="background: #FFFFFF; border-radius: 12px; padding: 1.75rem; margin-bottom: 1.5rem; 
+                border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="display: flex; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1rem; 
+                    border-bottom: 2px solid #F1F5F9;">
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0; 
+                       letter-spacing: -0.01em;">
                 🔑 API Credentials
             </h3>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
+    
+    with st.container():
         
         col1, col2 = st.columns(2)
         
@@ -521,16 +528,21 @@ def main():
                 placeholder="Enter your access token"
             )
     
-    # Current Configuration Card - iOS Style
-    with st.container():
-        st.markdown("""
-        <div style="background: #FFFFFF; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; 
-                    border: 1px solid #E5E5EA; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-            <h3 style="font-size: 1.25rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
+    # Current Configuration Card - Professional Style
+    st.markdown("""
+    <div style="background: #FFFFFF; border-radius: 12px; padding: 1.75rem; margin-bottom: 1.5rem; 
+                border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="display: flex; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1rem; 
+                    border-bottom: 2px solid #F1F5F9;">
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0; 
+                       letter-spacing: -0.01em;">
                 📋 Current Configuration
             </h3>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
+    
+    with st.container():
         
         with st.expander("View Configuration Details", expanded=False):
             config_df = pd.DataFrame([
@@ -544,9 +556,9 @@ def main():
             ])
             st.dataframe(config_df, use_container_width=True, hide_index=True)
     
-    # Action Buttons - Premium iOS Style
+    # Action Buttons - Professional Trading Platform Style
     st.markdown("""
-    <div style="margin: 2rem 0;">
+    <div style="margin: 2rem 0 1.5rem 0;">
     </div>
     """, unsafe_allow_html=True)
     
@@ -694,15 +706,16 @@ def main():
                     st.code(traceback.format_exc())
                     st.session_state.running = False
     
-    # Display results - Premium iOS Style
+    # Display results - Professional Trading Platform Style
     if st.session_state.results:
         st.markdown("""
-        <div style="margin: 3rem 0 1.5rem 0;">
-            <h2 style="font-size: 2rem; font-weight: 700; color: #000000; margin-bottom: 0.5rem;">
-                📊 Analysis Results
+        <div style="margin: 3rem 0 2rem 0; padding-bottom: 1.5rem; border-bottom: 2px solid #E2E8F0;">
+            <h2 style="font-size: 2rem; font-weight: 700; color: #1E293B; margin: 0 0 0.5rem 0; 
+                       letter-spacing: -0.01em;">
+                Analysis Results
             </h2>
-            <p style="color: #8E8E93; font-size: 1rem;">
-                Review your stock selection analysis results
+            <p style="color: #64748B; font-size: 1rem; margin: 0;">
+                Review your comprehensive stock selection analysis
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -764,15 +777,15 @@ def main():
             alerts_df = filtered_alerts
         
         # If user wants only the recent closed candle (intraday decision view),
-        # show a compact, trader-focused panel like Telegram notifications
+        # show professional trading platform style alerts
         if not include_historical and only_recent_candle:
             st.markdown("""
-            <div style="margin: 2rem 0 1rem 0;">
-                <h3 style="font-size: 1.5rem; font-weight: 600; color: #000000;">
+            <div style="margin: 2rem 0 1.5rem 0;">
+                <h3 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0 0 0.5rem 0;">
                     🔔 Intraday Alerts
                 </h3>
-                <p style="color: #8E8E93; font-size: 0.9rem;">
-                    Recent closed candle alerts sorted by volume ratio
+                <p style="color: #64748B; font-size: 0.875rem; margin: 0;">
+                    Recent closed candle alerts sorted by volume ratio (highest first)
                 </p>
             </div>
             """, unsafe_allow_html=True)
@@ -784,7 +797,7 @@ def main():
                 if 'vol_ratio' in alerts_df.columns:
                     alerts_df = alerts_df.sort_values('vol_ratio', ascending=False)
 
-                # Render premium iOS-style alert cards
+                # Render professional trading platform alert cards
                 for idx, r in alerts_df.iterrows():
                     symbol = r.get('symbol', 'N/A')
                     signal_type = r.get('signal_type', 'N/A')
@@ -794,37 +807,49 @@ def main():
                     swing_low = r.get('swing_low', None)
                     ts = r.get('timestamp', '')
                     
-                    # Determine card color based on signal type
-                    border_color = "#34C759" if signal_type == 'BREAKOUT' else "#FF3B30"
-                    bg_color = "rgba(52, 199, 89, 0.05)" if signal_type == 'BREAKOUT' else "rgba(255, 59, 48, 0.05)"
+                    # Professional color scheme
+                    border_color = "#4CAF50" if signal_type == 'BREAKOUT' else "#F44336"
+                    bg_color = "#FFFFFF"
+                    badge_color = "rgba(76, 175, 80, 0.1)" if signal_type == 'BREAKOUT' else "rgba(244, 67, 54, 0.1)"
+                    text_color = "#4CAF50" if signal_type == 'BREAKOUT' else "#F44336"
                     
                     # Build alert card
                     if signal_type == 'BREAKOUT':
-                        title = f"🟢 {symbol}: Breakout + Volume Spike"
+                        title = f"{symbol}"
+                        signal_badge = "BREAKOUT"
                         level = f"Above ₹{swing_high:.2f}" if swing_high else "N/A"
                     else:
-                        title = f"🔴 {symbol}: Breakdown + Volume Spike"
+                        title = f"{symbol}"
+                        signal_badge = "BREAKDOWN"
                         level = f"Below ₹{swing_low:.2f}" if swing_low else "N/A"
                     
                     details = []
                     if isinstance(price, (int, float)):
-                        details.append(f"<strong>Price:</strong> ₹{price:.2f}")
+                        details.append(f"<span style='color: #64748B;'>Price:</span> <strong style='color: #1E293B;'>₹{price:.2f}</strong>")
                     if isinstance(vol_ratio, (int, float)):
-                        details.append(f"<strong>Volume:</strong> {vol_ratio:.2f}×")
+                        details.append(f"<span style='color: #64748B;'>Volume:</span> <strong style='color: #1E293B;'>{vol_ratio:.2f}×</strong>")
                     if ts:
-                        details.append(f"<strong>Time:</strong> {ts}")
+                        details.append(f"<span style='color: #64748B;'>Time:</span> <strong style='color: #1E293B;'>{ts}</strong>")
                     
                     st.markdown(f"""
                     <div style="background: {bg_color}; border-left: 4px solid {border_color}; 
-                                border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;
-                                box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-                        <div style="font-weight: 600; font-size: 1.1rem; color: #000000; margin-bottom: 0.5rem;">
-                            {title}
+                                border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
+                                border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                transition: all 0.2s ease;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <div style="font-weight: 700; font-size: 1.125rem; color: #1E293B; letter-spacing: -0.01em;">
+                                {title}
+                            </div>
+                            <span style="background: {badge_color}; color: {text_color}; padding: 0.25rem 0.75rem; 
+                                        border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; 
+                                        letter-spacing: 0.05em;">
+                                {signal_badge}
+                            </span>
                         </div>
-                        <div style="color: #8E8E93; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                        <div style="color: #64748B; font-size: 0.875rem; margin-bottom: 0.75rem; font-weight: 500;">
                             {level}
                         </div>
-                        <div style="color: #000000; font-size: 0.85rem;">
+                        <div style="color: #1E293B; font-size: 0.875rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
                             {' | '.join(details)}
                         </div>
                     </div>
@@ -841,10 +866,10 @@ def main():
                 )
         else:
             # Full analytical view (includes historical if selected)
-            # Summary statistics - Premium iOS Style Cards
+            # Summary statistics - Professional Trading Platform Style
             st.markdown("""
-            <div style="margin: 2rem 0 1rem 0;">
-                <h3 style="font-size: 1.5rem; font-weight: 600; color: #000000;">
+            <div style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 2px solid #E2E8F0;">
+                <h3 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0;">
                     📊 Summary Statistics
                 </h3>
             </div>
@@ -873,11 +898,11 @@ def main():
                     avg_win_rate = summary_df['win_rate'].mean() if 'win_rate' in summary_df.columns else 0
                     st.metric("Avg Win Rate", f"{avg_win_rate:.2f}%")
             
-            # Alerts table - Premium iOS Style
+            # Alerts table - Professional Trading Platform Style
             if not alerts_df.empty:
                 st.markdown("""
-                <div style="margin: 2rem 0 1rem 0;">
-                    <h3 style="font-size: 1.5rem; font-weight: 600; color: #000000;">
+                <div style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 2px solid #E2E8F0;">
+                    <h3 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0;">
                         🔔 Alerts
                     </h3>
                 </div>
@@ -895,11 +920,11 @@ def main():
                     use_container_width=True
                 )
             
-            # Summary table - Premium iOS Style
+            # Summary table - Professional Trading Platform Style
             if not summary_df.empty:
                 st.markdown("""
-                <div style="margin: 2rem 0 1rem 0;">
-                    <h3 style="font-size: 1.5rem; font-weight: 600; color: #000000;">
+                <div style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 2px solid #E2E8F0;">
+                    <h3 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0;">
                         📈 Detailed Summary
                     </h3>
                 </div>
