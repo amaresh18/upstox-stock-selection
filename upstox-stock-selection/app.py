@@ -60,28 +60,44 @@ def initialize_session_state():
 def load_default_values():
     """Load default values into session state."""
     from datetime import date as _date
+    
+    # Update params - widgets will read from this on next render
     st.session_state.params = DEFAULT_VALUES.copy()
-
-    # Reset widget states so UI reflects defaults after rerun
-    st.session_state['interval_select'] = DEFAULT_VALUES['interval']
-    st.session_state['lookback_swing_input'] = int(DEFAULT_VALUES['lookback_swing'])
-    st.session_state['vol_window_input'] = int(DEFAULT_VALUES['vol_window'])
-    st.session_state['vol_mult_input'] = float(DEFAULT_VALUES['vol_mult'])
-    st.session_state['hold_bars_input'] = int(DEFAULT_VALUES['hold_bars'])
-    st.session_state['historical_days_input'] = int(DEFAULT_VALUES['historical_days'])
-    st.session_state['max_workers_input'] = int(DEFAULT_VALUES['max_workers'])
-
-    # Reset analysis scope controls
-    st.session_state['use_specific_date_check'] = False
+    
+    # Reset analysis scope controls (these can be set before widgets are created)
+    st.session_state['use_specific_date'] = False
     st.session_state['selected_date'] = _date.today()
-    st.session_state['only_recent_candle_check'] = True
-    st.session_state['include_historical_check'] = False
-
-    # Let recent candle time recompute based on defaults
-    st.session_state['recent_candle_select'] = None
-    st.session_state['selected_candle_dt'] = None
-
-    st.success("Default values loaded!")
+    st.session_state['only_recent_candle'] = True
+    st.session_state['include_historical'] = False
+    
+    # Clear ALL widget keys so they reset on next render
+    # This ensures widgets use their default values from params
+    widget_keys_to_reset = [
+        'interval_select',
+        'lookback_swing_input',
+        'vol_window_input',
+        'vol_mult_input',
+        'hold_bars_input',
+        'historical_days_input',
+        'max_workers_input',
+        'use_specific_date_check',
+        'analysis_date_picker',
+        'recent_candle_select',
+        'only_recent_candle_check',
+        'include_historical_check'
+    ]
+    for key in widget_keys_to_reset:
+        if key in st.session_state:
+            del st.session_state[key]
+    
+    # Also clear any cached widget state that might interfere
+    # Clear running state
+    st.session_state.running = False
+    
+    # Clear results
+    st.session_state.results = None
+    
+    st.success("✅ Default values loaded! All parameters reset to system defaults.")
 
 def main():
     """Main Streamlit app."""
@@ -95,7 +111,9 @@ def main():
         st.header("⚙️ Configuration")
         
         # Time Interval
-        interval_index = INTERVALS.index(st.session_state.params['interval']) if st.session_state.params['interval'] in INTERVALS else 5
+        # Get current interval from params (will be updated by Load Defaults)
+        current_interval = st.session_state.params.get('interval', DEFAULT_VALUES['interval'])
+        interval_index = INTERVALS.index(current_interval) if current_interval in INTERVALS else 5
         interval = st.selectbox(
             "Time Interval",
             options=INTERVALS,
@@ -103,6 +121,8 @@ def main():
             key="interval_select",
             help="Candle interval for analysis (1m, 5m, 10m, 15m, 30m, 1h, 2h, 4h, 1d)"
         )
+        # Update params with widget value (sync back)
+        st.session_state.params['interval'] = interval
 
         # Recent candle selector (dynamic based on interval)
         st.markdown("### 🕒 Recent Candle (Today)")
@@ -149,9 +169,11 @@ def main():
 
         # Date picker for historical analysis (comes first so candle times can use it)
         st.markdown("### 📅 Analysis Date")
+        # Get default value from session state (set by Load Defaults)
+        use_specific_date_default = st.session_state.get('use_specific_date', False)
         use_specific_date = st.checkbox(
             "Use specific date (for historical analysis)",
-            value=st.session_state.get('use_specific_date', False),
+            value=use_specific_date_default,
             key="use_specific_date_check",
             help="Check to analyze a specific past date instead of today"
         )
@@ -214,15 +236,19 @@ def main():
 
         # Controls for output scope
         st.markdown("### 📊 Results Scope")
+        # Get default values from session state (set by Load Defaults)
+        only_recent_candle_default = st.session_state.get('only_recent_candle', True)
         only_recent_candle = st.checkbox(
             "Show only selected recent closed candle",
-            value=True,
+            value=only_recent_candle_default,
             key="only_recent_candle_check",
             help="When checked, results are filtered to the chosen recent candle only"
         )
+        
+        include_historical_default = st.session_state.get('include_historical', False)
         include_historical = st.checkbox(
             "Include historical results (entire period)",
-            value=False,
+            value=include_historical_default,
             key="include_historical_check",
             help="When checked, shows all alerts across the selected historical period"
         )
@@ -235,65 +261,77 @@ def main():
             st.info("Historical results enabled. Recent-candle filter will be ignored.")
         
         # Lookback Swing
+        lookback_swing_default = int(st.session_state.params.get('lookback_swing', DEFAULT_VALUES['lookback_swing']))
         lookback_swing = st.number_input(
             "Lookback Swing (Bars)",
             min_value=1,
             max_value=100,
-            value=int(st.session_state.params['lookback_swing']),
+            value=lookback_swing_default,
             key="lookback_swing_input",
             help="Number of bars for swing high/low calculation"
         )
+        st.session_state.params['lookback_swing'] = lookback_swing
         
         # Volume Window
+        vol_window_default = int(st.session_state.params.get('vol_window', DEFAULT_VALUES['vol_window']))
         vol_window = st.number_input(
             "Volume Window (Bars)",
             min_value=1,
             max_value=500,
-            value=int(st.session_state.params['vol_window']),
+            value=vol_window_default,
             key="vol_window_input",
             help="Number of bars for average volume calculation (e.g., 70 = 10 days * 7 bars/day for 1h)"
         )
+        st.session_state.params['vol_window'] = vol_window
         
         # Volume Multiplier
+        vol_mult_default = float(st.session_state.params.get('vol_mult', DEFAULT_VALUES['vol_mult']))
         vol_mult = st.number_input(
             "Volume Multiplier",
             min_value=0.1,
             max_value=10.0,
-            value=float(st.session_state.params['vol_mult']),
+            value=vol_mult_default,
             step=0.1,
             key="vol_mult_input",
             help="Volume spike threshold (e.g., 1.6 = 1.6x average volume)"
         )
+        st.session_state.params['vol_mult'] = vol_mult
         
         # Hold Bars
+        hold_bars_default = int(st.session_state.params.get('hold_bars', DEFAULT_VALUES['hold_bars']))
         hold_bars = st.number_input(
             "Hold Bars",
             min_value=1,
             max_value=100,
-            value=int(st.session_state.params['hold_bars']),
+            value=hold_bars_default,
             key="hold_bars_input",
             help="Number of bars to hold position for P&L calculation"
         )
+        st.session_state.params['hold_bars'] = hold_bars
         
         # Historical Days
+        historical_days_default = int(st.session_state.params.get('historical_days', DEFAULT_VALUES['historical_days']))
         historical_days = st.number_input(
             "Historical Days",
             min_value=1,
             max_value=365,
-            value=int(st.session_state.params['historical_days']),
+            value=historical_days_default,
             key="historical_days_input",
             help="Number of days of historical data to fetch"
         )
+        st.session_state.params['historical_days'] = historical_days
         
         # Max Workers
+        max_workers_default = int(st.session_state.params.get('max_workers', DEFAULT_VALUES['max_workers']))
         max_workers = st.number_input(
             "Max Workers (Parallel)",
             min_value=1,
             max_value=50,
-            value=int(st.session_state.params['max_workers']),
+            value=max_workers_default,
             key="max_workers_input",
             help="Number of parallel workers for analysis"
         )
+        st.session_state.params['max_workers'] = max_workers
         
         st.markdown("---")
         
@@ -307,16 +345,8 @@ def main():
         
         with col2:
             if st.button("💾 Save Config", use_container_width=True):
-                st.session_state.params = {
-                    'interval': interval,
-                    'lookback_swing': lookback_swing,
-                    'vol_window': vol_window,
-                    'vol_mult': vol_mult,
-                    'hold_bars': hold_bars,
-                    'historical_days': historical_days,
-                    'max_workers': max_workers,
-                }
-                st.success("Configuration saved!")
+                # Params are already synced from widgets above, just confirm
+                st.success("✅ Configuration saved! All parameters are ready to use.")
     
     # Main content area
     st.header("📊 Stock Selection Analysis")
@@ -341,16 +371,8 @@ def main():
             help="Your Upstox Access Token"
         )
     
-    # Update session state with current UI values
-    st.session_state.params = {
-        'interval': interval,
-        'lookback_swing': lookback_swing,
-        'vol_window': vol_window,
-        'vol_mult': vol_mult,
-        'hold_bars': hold_bars,
-        'historical_days': historical_days,
-        'max_workers': max_workers,
-    }
+    # Note: params are already updated in sidebar widgets above
+    # This ensures params are always in sync with UI values
     
     # Display current configuration
     with st.expander("📋 Current Configuration", expanded=False):
@@ -391,8 +413,27 @@ def main():
             
             with st.spinner("🔄 Running analysis... This may take a few minutes."):
                 try:
-                    # Create selector
+                    # Temporarily override settings BEFORE creating selector
+                    # This ensures all methods use the correct settings
+                    import src.config.settings as settings
+                    original_lookback = settings.LOOKBACK_SWING
+                    original_vol_window = settings.VOL_WINDOW
+                    original_vol_mult = settings.VOL_MULT
+                    original_hold_bars = settings.HOLD_BARS
+                    original_interval = settings.DEFAULT_INTERVAL
+                    
+                    # Override settings with UI values
+                    settings.LOOKBACK_SWING = int(st.session_state.params['lookback_swing'])
+                    settings.VOL_WINDOW = int(st.session_state.params['vol_window'])
+                    settings.VOL_MULT = float(st.session_state.params['vol_mult'])
+                    settings.HOLD_BARS = int(st.session_state.params['hold_bars'])
+                    settings.DEFAULT_INTERVAL = st.session_state.params['interval']
+                    
+                    # Create selector AFTER settings are overridden
                     selector = UpstoxStockSelector(api_key, access_token, DEFAULT_NSE_JSON_PATH)
+                    
+                    # Clear any cached data to ensure fresh analysis
+                    selector.yf_historical_data = {}
                     
                     # Load symbols from NSE.json
                     import json
@@ -405,22 +446,30 @@ def main():
                         st.error("❌ No symbols found in NSE.json!")
                         st.session_state.running = False
                     else:
-                        st.info(f"📊 Analyzing {len(symbols)} symbols...")
+                        # Display configuration being used
+                        st.info(f"📊 Analyzing {len(symbols)} symbols with configuration:")
+                        config_text = f"""
+- **Interval**: {settings.DEFAULT_INTERVAL}
+- **Lookback Swing**: {settings.LOOKBACK_SWING} bars
+- **Volume Window**: {settings.VOL_WINDOW} bars  
+- **Volume Multiplier**: {settings.VOL_MULT}x
+- **Hold Bars**: {settings.HOLD_BARS} bars
+- **Historical Days**: {st.session_state.params['historical_days']} days
+- **Max Workers**: {st.session_state.params['max_workers']} parallel workers
+                        """
+                        st.markdown(config_text)
                         
-                        # Temporarily override settings
-                        import src.config.settings as settings
-                        original_lookback = settings.LOOKBACK_SWING
-                        original_vol_window = settings.VOL_WINDOW
-                        original_vol_mult = settings.VOL_MULT
-                        original_hold_bars = settings.HOLD_BARS
-                        original_interval = settings.DEFAULT_INTERVAL
-                        
-                        # Override settings with UI values
-                        settings.LOOKBACK_SWING = int(st.session_state.params['lookback_swing'])
-                        settings.VOL_WINDOW = int(st.session_state.params['vol_window'])
-                        settings.VOL_MULT = float(st.session_state.params['vol_mult'])
-                        settings.HOLD_BARS = int(st.session_state.params['hold_bars'])
-                        settings.DEFAULT_INTERVAL = st.session_state.params['interval']
+                        # Also print to console for debugging
+                        print(f"\n{'='*80}")
+                        print(f"ANALYSIS CONFIGURATION:")
+                        print(f"  Interval: {settings.DEFAULT_INTERVAL}")
+                        print(f"  Lookback Swing: {settings.LOOKBACK_SWING}")
+                        print(f"  Volume Window: {settings.VOL_WINDOW}")
+                        print(f"  Volume Multiplier: {settings.VOL_MULT}")
+                        print(f"  Hold Bars: {settings.HOLD_BARS}")
+                        print(f"  Historical Days: {st.session_state.params['historical_days']}")
+                        print(f"  Max Workers: {st.session_state.params['max_workers']}")
+                        print(f"{'='*80}\n")
                         
                         try:
                             # Get target date from session state (if specified)
@@ -436,14 +485,38 @@ def main():
                                 )
                             )
                             
-                            # Store results
+                            # Verify settings were actually used (read them back)
+                            actual_settings = {
+                                'interval': settings.DEFAULT_INTERVAL,
+                                'lookback_swing': settings.LOOKBACK_SWING,
+                                'vol_window': settings.VOL_WINDOW,
+                                'vol_mult': settings.VOL_MULT,
+                                'hold_bars': settings.HOLD_BARS,
+                            }
+                            
+                            # Store results with both requested and actual settings
                             st.session_state.results = {
                                 'summary': summary_df,
                                 'alerts': alerts_df,
-                                'params': st.session_state.params.copy()
+                                'params': st.session_state.params.copy(),
+                                'actual_settings': actual_settings
                             }
                             
-                            st.success(f"✅ Analysis complete! Found {len(alerts_df)} alerts.")
+                            # Verify settings match
+                            settings_match = (
+                                actual_settings['interval'] == st.session_state.params['interval'] and
+                                actual_settings['lookback_swing'] == st.session_state.params['lookback_swing'] and
+                                actual_settings['vol_window'] == st.session_state.params['vol_window'] and
+                                actual_settings['vol_mult'] == st.session_state.params['vol_mult'] and
+                                actual_settings['hold_bars'] == st.session_state.params['hold_bars']
+                            )
+                            
+                            if settings_match:
+                                st.success(f"✅ Analysis complete! Found {len(alerts_df)} alerts using the configured parameters.")
+                            else:
+                                st.warning(f"⚠️ Analysis complete with {len(alerts_df)} alerts, but settings verification failed!")
+                                st.warning(f"Requested: {st.session_state.params}")
+                                st.warning(f"Actual: {actual_settings}")
                             
                         finally:
                             # Restore original settings
@@ -469,6 +542,11 @@ def main():
         results = st.session_state.results
         summary_df = results['summary']
         alerts_df = results['alerts']
+        
+        # Display configuration used for this analysis
+        if 'actual_settings' in results:
+            with st.expander("📋 Configuration Used for This Analysis", expanded=False):
+                st.json(results['actual_settings'])
         
         # Get filter settings from session state (set in sidebar)
         include_historical = st.session_state.get('include_historical', False)

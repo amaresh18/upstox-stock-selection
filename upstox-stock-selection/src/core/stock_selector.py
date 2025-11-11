@@ -18,12 +18,9 @@ import numpy as np
 from pytz import timezone
 import yfinance as yf
 
+from ..config import settings
 from ..config.settings import (
     UPSTOX_BASE_URL,
-    LOOKBACK_SWING,
-    VOL_WINDOW,
-    VOL_MULT,
-    HOLD_BARS,
     DEFAULT_HISTORICAL_DAYS,
     DEFAULT_INTERVAL,
     DEFAULT_MAX_WORKERS,
@@ -52,6 +49,34 @@ class UpstoxStockSelector:
         self.alerts = []
         self.summary_stats = []
         self.yf_historical_data = {}  # Cache for Yahoo Finance batch downloaded data
+    
+    def _interval_to_upstox_format(self, interval: str) -> Tuple[str, int]:
+        """
+        Convert interval string to Upstox API format (unit, interval_value).
+        
+        Args:
+            interval: Interval string like "1m", "5m", "15m", "30m", "1h", "2h", "4h", "1d"
+            
+        Returns:
+            Tuple of (unit, interval_value) where unit is "minutes" or "hours" or "day"
+        """
+        interval = interval.lower().strip()
+        
+        if interval.endswith('m'):
+            # Minutes: 1m, 5m, 10m, 15m, 30m
+            minutes = int(interval[:-1])
+            return ("minutes", minutes)
+        elif interval.endswith('h'):
+            # Hours: 1h, 2h, 4h
+            hours = int(interval[:-1])
+            return ("hours", hours)
+        elif interval.endswith('d'):
+            # Days: 1d
+            days = int(interval[:-1])
+            return ("day", days)
+        else:
+            # Default to 1 hour
+            return ("hours", 1)
         
     def _load_instrument_map(self) -> Dict[str, str]:
         """
@@ -131,8 +156,11 @@ class UpstoxStockSelector:
         """
         if days is None:
             days = DEFAULT_HISTORICAL_DAYS
-            
+        
+        # Get interval from settings (read fresh each time)
+        yf_interval = settings.DEFAULT_INTERVAL
         print(f"Batch downloading historical data from Yahoo Finance for {len(symbols)} symbols...")
+        print(f"  Using interval: {yf_interval}, days: {days}")
         
         # Convert symbols to Yahoo Finance format (SYMBOL.NS)
         yf_symbols = [f"{symbol}.NS" for symbol in symbols]
@@ -141,7 +169,7 @@ class UpstoxStockSelector:
             # Batch download using yf.download() - more efficient than individual downloads
             raw = yf.download(
                 tickers=" ".join(yf_symbols),
-                interval=DEFAULT_INTERVAL,
+                interval=yf_interval,
                 period=f"{days}d",
                 group_by="ticker",
                 auto_adjust=False,
@@ -246,6 +274,8 @@ class UpstoxStockSelector:
         """
         if days is None:
             days = DEFAULT_HISTORICAL_DAYS
+        
+        print(f"  Fetching historical data for {symbol} with {days} days of history")
             
         try:
             # Use target_date if provided, otherwise use current date
@@ -256,16 +286,17 @@ class UpstoxStockSelector:
                 end_date = datetime.now(self.ist)
             
             # Step 1: Get historical data from Yahoo Finance (from batch download cache)
+            # Note: The batch download should have used the same 'days' parameter
             hist_df = pd.DataFrame()
             if symbol in self.yf_historical_data:
                 hist_df = self.yf_historical_data[symbol].copy()
-                print(f"Using cached Yahoo Finance data for {symbol}: {len(hist_df)} bars")
+                print(f"  Using cached Yahoo Finance data for {symbol}: {len(hist_df)} bars (requested {days} days)")
             else:
-                print(f"Warning: No Yahoo Finance data found for {symbol} in cache")
+                print(f"  Warning: No Yahoo Finance data found for {symbol} in cache")
             
             # Step 2: Fetch historical data from Upstox API (if Yahoo Finance failed or not available)
             if hist_df.empty and self.access_token and self.access_token != 'dummy':
-                print(f"Fetching historical data from Upstox API for {symbol}...")
+                print(f"  Fetching historical data from Upstox API for {symbol} (last {days} days)...")
                 try:
                     start_date = end_date - timedelta(days=days)
                     hist_upstox = await self._fetch_historical_data_from_upstox_api(
@@ -367,8 +398,8 @@ class UpstoxStockSelector:
                             print(f"  Filtered out {before_filter - after_filter} incomplete candle(s) for {symbol} (current hour: {current_hour}:15)")
             
             # Ensure we have enough data points (at least 70 bars for calculations)
-            if len(df) < VOL_WINDOW:
-                print(f"Insufficient data for {symbol}: {len(df)} bars (need at least {VOL_WINDOW})")
+            if len(df) < settings.VOL_WINDOW:
+                print(f"Insufficient data for {symbol}: {len(df)} bars (need at least {settings.VOL_WINDOW})")
                 return None
             
             # Ensure timestamp is the index
@@ -420,11 +451,14 @@ class UpstoxStockSelector:
             # Encode instrument key for URL
             encoded_instrument_key = urllib.parse.quote(instrument_key, safe='')
             
-            # Use Upstox API v3 endpoint for hourly intraday data
+            # Use Upstox API v3 endpoint with configured interval
             # Format: /historical-candle/{instrument_key}/{unit}/{interval}/{to_date}/{from_date}
-            # For 1-hour data: unit=hours, interval=1
             # Note: to_date comes before from_date in the path
-            url = f"{UPSTOX_BASE_URL}/historical-candle/{encoded_instrument_key}/hours/1/{end_str}/{start_str}"
+            # Read interval fresh from settings
+            current_interval = settings.DEFAULT_INTERVAL
+            unit, interval_value = self._interval_to_upstox_format(current_interval)
+            print(f"  Fetching historical data for {symbol} with interval: {current_interval} ({unit}/{interval_value})")
+            url = f"{UPSTOX_BASE_URL}/historical-candle/{encoded_instrument_key}/{unit}/{interval_value}/{end_str}/{start_str}"
             params = {}
             
             async with aiohttp.ClientSession() as session:
@@ -525,17 +559,22 @@ class UpstoxStockSelector:
             
             encoded_instrument_key = urllib.parse.quote(instrument_key, safe='')
             
+            # Get interval from settings (read fresh each time)
+            current_interval = settings.DEFAULT_INTERVAL
+            unit, interval_value = self._interval_to_upstox_format(current_interval)
+            
             if target_date:
                 # For specific date, use historical candle API with date range
-                # Format: /historical-candle/{instrument_key}/hours/1/{to_date}/{from_date}
+                # Format: /historical-candle/{instrument_key}/{unit}/{interval}/{to_date}/{from_date}
                 date_str = target_date.strftime("%Y-%m-%d")
-                url = f"{UPSTOX_BASE_URL}/historical-candle/{encoded_instrument_key}/hours/1/{date_str}/{date_str}"
+                print(f"  Fetching data for {symbol} on {date_str} with interval: {current_interval} ({unit}/{interval_value})")
+                url = f"{UPSTOX_BASE_URL}/historical-candle/{encoded_instrument_key}/{unit}/{interval_value}/{date_str}/{date_str}"
             else:
                 # Use Upstox API v3 Intraday Candle Data endpoint for current day
                 # Format: /historical-candle/intraday/{instrument_key}/{unit}/{interval}
-                # For 1-hour data: unit=hours, interval=1
                 # This API automatically returns current trading day data
-                url = f"{UPSTOX_BASE_URL}/historical-candle/intraday/{encoded_instrument_key}/hours/1"
+                print(f"  Fetching intraday data for {symbol} with interval: {current_interval} ({unit}/{interval_value})")
+                url = f"{UPSTOX_BASE_URL}/historical-candle/intraday/{encoded_instrument_key}/{unit}/{interval_value}"
             
             params = {}
             
@@ -610,17 +649,23 @@ class UpstoxStockSelector:
         Returns:
             DataFrame with calculated indicators
         """
-        # Swing High = rolling max High over 12 bars * 0.995
-        # Match reference: no min_periods (uses all available data)
-        df['SwingHigh'] = df['high'].rolling(window=LOOKBACK_SWING).max() * 0.995
+        # Get current settings values (dynamically from settings module)
+        # Read fresh each time to ensure we get the latest values
+        lookback_swing = settings.LOOKBACK_SWING
+        vol_window = settings.VOL_WINDOW
+        print(f"  Calculating indicators with Lookback Swing: {lookback_swing}, Volume Window: {vol_window}")
         
-        # Swing Low = rolling min Low over 12 bars * 1.005
+        # Swing High = rolling max High over lookback_swing bars * 0.995
         # Match reference: no min_periods (uses all available data)
-        df['SwingLow'] = df['low'].rolling(window=LOOKBACK_SWING).min() * 1.005
+        df['SwingHigh'] = df['high'].rolling(window=lookback_swing).max() * 0.995
         
-        # Average volume over 70 bars (10 days * 7 bars/day)
+        # Swing Low = rolling min Low over lookback_swing bars * 1.005
         # Match reference: no min_periods (uses all available data)
-        df['AvgVol10d'] = df['volume'].rolling(window=VOL_WINDOW).mean()
+        df['SwingLow'] = df['low'].rolling(window=lookback_swing).min() * 1.005
+        
+        # Average volume over vol_window bars
+        # Match reference: no min_periods (uses all available data)
+        df['AvgVol10d'] = df['volume'].rolling(window=vol_window).mean()
         
         # Volume ratio
         df['VolRatio'] = df['volume'] / df['AvgVol10d']
@@ -628,9 +673,9 @@ class UpstoxStockSelector:
         # Range = High - Low
         df['Range'] = df['high'] - df['low']
         
-        # Average range (rolling mean over 12 bars)
+        # Average range (rolling mean over lookback_swing bars)
         # Match reference: no min_periods (uses all available data)
-        df['AvgRange'] = df['Range'].rolling(window=LOOKBACK_SWING).mean()
+        df['AvgRange'] = df['Range'].rolling(window=lookback_swing).mean()
         
         return df
     
@@ -652,15 +697,24 @@ class UpstoxStockSelector:
         """
         alerts = []
         
-        # Start index: max(LOOKBACK_SWING, VOL_WINDOW) + 1 = 71
+        # Get current settings values (dynamically from settings module)
+        # Read fresh each time to ensure we get the latest values
+        lookback_swing = settings.LOOKBACK_SWING
+        vol_window = settings.VOL_WINDOW
+        vol_mult = settings.VOL_MULT
+        hold_bars = settings.HOLD_BARS
+        
+        print(f"  Detecting signals with Lookback Swing: {lookback_swing}, Volume Window: {vol_window}, Volume Multiplier: {vol_mult}, Hold Bars: {hold_bars}")
+        
+        # Start index: max(LOOKBACK_SWING, VOL_WINDOW) + 1
         # Match reference: int(max(LOOKBACK_SWING, VOL_WINDOW)) + 1
-        start_i = int(max(LOOKBACK_SWING, VOL_WINDOW)) + 1
+        start_i = int(max(lookback_swing, vol_window)) + 1
         
         # End index: 
         # - For backtesting: len(df) - HOLD_BARS to ensure we have enough bars for exit price
         # - For real-time: len(df) to allow checking all bars (exit price optional)
         if require_exit_price:
-            end_i = len(df) - HOLD_BARS
+            end_i = len(df) - hold_bars
         else:
             end_i = len(df)  # Allow checking all bars for real-time alerts
         
@@ -699,7 +753,7 @@ class UpstoxStockSelector:
             # Breakout condition: crosses above PREVIOUS bar's swing high
             crosses_above = (prev_close <= swing_high_prev) and (curr_close > swing_high_prev)
             
-            if crosses_above and (vol_ratio >= VOL_MULT) and strong_bull:
+            if crosses_above and (vol_ratio >= vol_mult) and strong_bull:
                 # Entry: next bar's open (i+1) if available, else current close
                 if i + 1 < len(df):
                     entry_price = df['open'].iloc[i+1]
@@ -709,12 +763,12 @@ class UpstoxStockSelector:
                 # Exit price and P&L calculation
                 if require_exit_price:
                     # For backtesting: exit price is required
-                    exit_price = df['close'].iloc[i+HOLD_BARS]
+                    exit_price = df['close'].iloc[i+hold_bars]
                     pnl_pct = ((exit_price - entry_price) / entry_price) * 100.0
                 else:
                     # For real-time alerts: exit price not required, set to None
-                    if i + HOLD_BARS < len(df):
-                        exit_price = df['close'].iloc[i+HOLD_BARS]
+                    if i + hold_bars < len(df):
+                        exit_price = df['close'].iloc[i+hold_bars]
                         pnl_pct = ((exit_price - entry_price) / entry_price) * 100.0
                     else:
                         # Not enough bars for exit - this is fine for real-time alerts
@@ -734,13 +788,13 @@ class UpstoxStockSelector:
                     'entry_price': entry_price,
                     'exit_price': exit_price,
                     'pnl_pct': pnl_pct,
-                    'bars_after': HOLD_BARS
+                    'bars_after': hold_bars
                 })
             
             # Breakdown condition: crosses below PREVIOUS bar's swing low
             crosses_below = (prev_close >= swing_low_prev) and (curr_close < swing_low_prev)
             
-            if crosses_below and (vol_ratio >= VOL_MULT) and strong_bear:
+            if crosses_below and (vol_ratio >= vol_mult) and strong_bear:
                 # Entry: next bar's open (i+1) if available, else current close
                 if i + 1 < len(df):
                     entry_price = df['open'].iloc[i+1]
@@ -750,13 +804,13 @@ class UpstoxStockSelector:
                 # Exit price and P&L calculation
                 if require_exit_price:
                     # For backtesting: exit price is required
-                    exit_price = df['close'].iloc[i+HOLD_BARS]
+                    exit_price = df['close'].iloc[i+hold_bars]
                     # For breakdown: (entry - exit) / entry * 100
                     pnl_pct = ((entry_price - exit_price) / entry_price) * 100.0
                 else:
                     # For real-time alerts: exit price not required, set to None
-                    if i + HOLD_BARS < len(df):
-                        exit_price = df['close'].iloc[i+HOLD_BARS]
+                    if i + hold_bars < len(df):
+                        exit_price = df['close'].iloc[i+hold_bars]
                         # For breakdown: (entry - exit) / entry * 100
                         pnl_pct = ((entry_price - exit_price) / entry_price) * 100.0
                     else:
@@ -777,7 +831,7 @@ class UpstoxStockSelector:
                     'entry_price': entry_price,
                     'exit_price': exit_price,
                     'pnl_pct': pnl_pct,
-                    'bars_after': HOLD_BARS
+                    'bars_after': hold_bars
                 })
         
         return alerts
@@ -840,13 +894,14 @@ class UpstoxStockSelector:
             'profit_factor': round(profit_factor, 2) if profit_factor != float('inf') else 999.99
         }
     
-    async def _analyze_symbol(self, symbol: str, target_date: date = None) -> Tuple[List[Dict], Dict]:
+    async def _analyze_symbol(self, symbol: str, target_date: date = None, days: int = None) -> Tuple[List[Dict], Dict]:
         """
         Analyze a single symbol for signals and statistics.
         
         Args:
             symbol: NSE trading symbol
             target_date: Specific date to analyze. If None, uses current date.
+            days: Number of days of historical data to fetch
             
         Returns:
             Tuple of (alerts list, statistics dict)
@@ -858,8 +913,8 @@ class UpstoxStockSelector:
                 print(f"Instrument key not found for {symbol}")
                 return [], {}
             
-            # Fetch historical data
-            df = await self._fetch_historical_data(instrument_key, symbol, target_date=target_date)
+            # Fetch historical data with days parameter
+            df = await self._fetch_historical_data(instrument_key, symbol, days=days, target_date=target_date)
             if df is None or len(df) == 0:
                 return [], {}
             
@@ -909,10 +964,11 @@ class UpstoxStockSelector:
         self.target_date = target_date
         
         print(f"Starting analysis of {len(symbols)} symbols with {max_workers} workers...")
+        print(f"Historical days requested: {days}")
         
         # Step 1: Batch download historical data from Yahoo Finance
         print("\n" + "="*80)
-        print("STEP 1: Batch downloading historical data from Yahoo Finance")
+        print(f"STEP 1: Batch downloading historical data from Yahoo Finance ({days} days)")
         print("="*80)
         self.yf_historical_data = self._batch_download_yahoo_finance(symbols, days=days)
         
@@ -929,7 +985,7 @@ class UpstoxStockSelector:
         async def analyze_with_semaphore(symbol: str):
             """Analyze symbol with semaphore control."""
             async with semaphore:
-                return await self._analyze_symbol(symbol, target_date=target_date)
+                return await self._analyze_symbol(symbol, target_date=target_date, days=days)
         
         # Create tasks for all symbols
         tasks = [analyze_with_semaphore(symbol) for symbol in symbols]
