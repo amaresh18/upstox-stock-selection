@@ -1,18 +1,21 @@
 """
-Continuous real-time alert monitoring script.
+Scheduled alert monitoring script (optimized for minimal server usage).
 
-This script runs continuously during market hours and checks for alerts every few minutes.
+This script ONLY runs at scheduled time slots to minimize server usage and stay within free tier limits.
 It will notify you immediately when new alerts are generated.
 
 Usage:
     python scripts/run_continuous_alerts.py
 
 The script will:
-- Run continuously during market hours (9:15 AM - 3:30 PM IST)
-- Check for alerts 30 seconds after each hour completes (9:15:30, 10:15:30, etc.)
-- Display new alerts immediately
+- ONLY check at scheduled time slots: 9:15:30, 10:15:30, 11:15:30, 12:15:30, 13:15:30, 14:15:30, 15:15:30
+- Sleep between scheduled times to save server resources
+- Display new alerts immediately when detected
 - Save all alerts to CSV files
-- Stop automatically when market closes
+- Automatically resume next trading day
+
+IMPORTANT: This script does NOT run every 5 minutes - it only runs at the 7 scheduled time slots per day.
+This ensures minimal server usage and keeps you within Railway's free tier limits.
 
 Press Ctrl+C to stop the script manually.
 """
@@ -135,11 +138,14 @@ class ContinuousAlertMonitor:
             
             return next_check
         else:
-            # Use fixed interval (fallback)
-            if hasattr(self, 'check_interval') and self.check_interval:
-                return now + self.check_interval
+            # Fixed interval mode is disabled - should never reach here
+            # If we do, default to next hour slot as fallback
+            next_hour = now.hour + 1
+            if next_hour <= 15:
+                return now.replace(hour=next_hour, minute=15, second=30, microsecond=0)
             else:
-                return now + timedelta(minutes=5)
+                # Market closed, check tomorrow
+                return (now + timedelta(days=1)).replace(hour=9, minute=15, second=30, microsecond=0)
     
     def get_alert_key(self, alert) -> str:
         """Generate a unique key for an alert to track if we've seen it."""
@@ -431,21 +437,26 @@ class ContinuousAlertMonitor:
         
         print("="*80)
         print(f"🚀 Script started at: {startup_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
-        if self.check_after_hour:
-            print("Check strategy: 30 seconds after each hour completes (9:15:30, 10:15:30, 11:15:30, etc.)")
-            print("   This ensures we check right after hourly candles are available")
-            print("   Maximum delay: ~30 seconds after hour completes for faster alerts")
-            print(f"\n📅 Scheduled check times today:")
-            market_hours = [9, 10, 11, 12, 13, 14, 15]
-            for hour in market_hours:
-                check_time = startup_time.replace(hour=hour, minute=15, second=30, microsecond=0)
-                if check_time >= startup_time:
-                    print(f"   • {check_time.strftime('%H:%M:%S')}")
-        else:
-            print(f"Check interval: {int(self.check_interval.total_seconds() / 60)} minutes")
-        print(f"Symbols monitored: {len(self.symbols)}")
-        print(f"Market hours: 9:15 AM - 3:30 PM IST")
-        print(f"Press Ctrl+C to stop")
+        print("✅ Check strategy: SCHEDULED TIME SLOTS ONLY (saves server usage)")
+        print("   • Checks 30 seconds after each hour completes (9:15:30, 10:15:30, etc.)")
+        print("   • This ensures we check right after hourly candles are available")
+        print("   • NO continuous checking - only at scheduled times")
+        print(f"\n📅 Scheduled check times today:")
+        market_hours = [9, 10, 11, 12, 13, 14, 15]
+        scheduled_times = []
+        for hour in market_hours:
+            check_time = startup_time.replace(hour=hour, minute=15, second=30, microsecond=0)
+            if check_time >= startup_time:
+                scheduled_times.append(check_time)
+                print(f"   • {check_time.strftime('%H:%M:%S')}")
+        
+        if not scheduled_times:
+            print("   • No more scheduled times today (market closed)")
+        
+        print(f"\n💡 Server Usage: Only {len(scheduled_times)} checks today (minimal usage)")
+        print(f"📊 Symbols monitored: {len(self.symbols)}")
+        print(f"⏰ Market hours: 9:15 AM - 3:30 PM IST")
+        print(f"🛑 Press Ctrl+C to stop")
         print("="*80)
         
         # Main monitoring loop
@@ -463,19 +474,23 @@ class ContinuousAlertMonitor:
                     # Market is open - check for alerts
                     await self.check_for_alerts()
                     
-                    # Calculate next check time
+                    # Calculate next check time (ONLY scheduled time slots)
                     next_check = self.get_next_check_time()
                     wait_seconds = (next_check - now).total_seconds()
                     
                     if wait_seconds > 0:
                         if wait_seconds < 60:
-                            print(f"\n⏰ Next check at: {next_check.strftime('%H:%M:%S')} (in {int(wait_seconds)} seconds)")
+                            print(f"\n⏰ Next scheduled check: {next_check.strftime('%H:%M:%S')} (in {int(wait_seconds)} seconds)")
                         else:
-                            print(f"\n⏰ Next check at: {next_check.strftime('%H:%M:%S')} (in {int(wait_seconds/60)} minutes)")
+                            mins = int(wait_seconds / 60)
+                            secs = int(wait_seconds % 60)
+                            print(f"\n⏰ Next scheduled check: {next_check.strftime('%H:%M:%S')} (in {mins}m {secs}s)")
+                        print("   💡 Script is sleeping to save server usage - only runs at scheduled times")
                         print("   (Press Ctrl+C to stop)")
-                        print(f"💤 Waiting until {next_check.strftime('%H:%M:%S')}...")
+                        print(f"💤 Sleeping until {next_check.strftime('%H:%M:%S')}...")
                         
-                        # Show periodic heartbeat while waiting (every 5 minutes)
+                        # Sleep until next scheduled time (no periodic checks)
+                        # This minimizes server usage by sleeping until the exact scheduled time
                         wait_start = datetime.now(self.ist)
                         last_heartbeat = 0
                         while True:
@@ -485,22 +500,27 @@ class ContinuousAlertMonitor:
                             if remaining <= 0:
                                 break
                             
-                            # Show heartbeat every 5 minutes
-                            if int(elapsed) >= last_heartbeat + 300 and elapsed > 0:
+                            # Show heartbeat every 10 minutes (reduced frequency to save resources)
+                            if int(elapsed) >= last_heartbeat + 600 and elapsed > 0:
                                 last_heartbeat = int(elapsed)
                                 mins_remaining = int(remaining / 60)
                                 secs_remaining = int(remaining % 60)
-                                print(f"   💓 Heartbeat: Still waiting... {mins_remaining}m {secs_remaining}s until next check at {next_check.strftime('%H:%M:%S')}")
+                                print(f"   💓 Heartbeat: Sleeping... {mins_remaining}m {secs_remaining}s until next scheduled check at {next_check.strftime('%H:%M:%S')}")
                             
-                            # Sleep in smaller chunks to allow for early wake-up
-                            sleep_time = min(30, remaining)  # Check every 30 seconds
+                            # Sleep in chunks (check every 30 seconds to allow for early wake-up if needed)
+                            sleep_time = min(30, remaining)
                             if sleep_time > 0:
                                 await asyncio.sleep(sleep_time)
                             else:
                                 break
                     else:
-                        # Next check time is in the past (shouldn't happen), wait 1 minute
-                        await asyncio.sleep(60)
+                        # Next check time is in the past (shouldn't happen), calculate next scheduled time
+                        next_check = self.get_next_check_time()
+                        wait_seconds = (next_check - now).total_seconds()
+                        if wait_seconds > 0:
+                            await asyncio.sleep(min(wait_seconds, 60))
+                        else:
+                            await asyncio.sleep(60)
                 else:
                     # Market is closed - wait and check again
                     if "Weekend" in status:
@@ -543,23 +563,27 @@ class ContinuousAlertMonitor:
 
 async def main():
     """Main function."""
-    # Check if user wants fixed interval instead of hourly checks
-    use_fixed_interval = os.getenv('USE_FIXED_INTERVAL', 'false').lower() == 'true'
+    # IMPORTANT: This script ONLY runs at scheduled time slots to save server usage
+    # Scheduled times: 9:15:30, 10:15:30, 11:15:30, 12:15:30, 13:15:30, 14:15:30, 15:15:30
+    # This ensures minimal server usage and stays within free tier limits
     
-    if use_fixed_interval:
-        # Use fixed interval (for testing or custom schedules)
-        check_interval_seconds = os.getenv('ALERT_CHECK_INTERVAL_SECONDS')
-        if check_interval_seconds:
-            check_interval = int(check_interval_seconds) / 60  # Convert seconds to minutes
-        else:
-            check_interval = int(os.getenv('ALERT_CHECK_INTERVAL_MINUTES', '5'))  # Default: 5 minutes
-        
-        # Create monitor with fixed interval
-        monitor = ContinuousAlertMonitor(check_after_hour=False)
-        monitor.check_interval = timedelta(minutes=check_interval)
-    else:
-        # Use hourly check strategy (default - most efficient for hourly candles)
-        monitor = ContinuousAlertMonitor(check_after_hour=True)
+    # Fixed interval mode is DISABLED to save server usage
+    # The script will ONLY check at scheduled hourly time slots
+    monitor = ContinuousAlertMonitor(check_after_hour=True)
+    
+    print("\n" + "="*80)
+    print("⚠️  SCHEDULED TIME SLOTS ONLY - NO CONTINUOUS CHECKING")
+    print("="*80)
+    print("This script will ONLY run at scheduled time slots:")
+    print("  • 9:15:30 AM (checks 9:15 candle)")
+    print("  • 10:15:30 AM (checks 10:15 candle)")
+    print("  • 11:15:30 AM (checks 11:15 candle)")
+    print("  • 12:15:30 PM (checks 12:15 candle)")
+    print("  • 1:15:30 PM (checks 13:15 candle)")
+    print("  • 2:15:30 PM (checks 14:15 candle)")
+    print("  • 3:15:30 PM (checks 15:15 candle)")
+    print("\nThis minimizes server usage and keeps you within free tier limits.")
+    print("="*80 + "\n")
     
     await monitor.run()
 
