@@ -460,8 +460,8 @@ class Backtester:
             # Calculate indicators
             df = self.selector._calculate_indicators(df)
             
-            # Detect signals
-            alerts = self.selector._detect_signals(df, symbol)
+            # Detect signals (require exit price for backtesting)
+            alerts = self.selector._detect_signals(df, symbol, require_exit_price=True)
             
             # Filter alerts to only include those within the backtest period
             filtered_alerts = []

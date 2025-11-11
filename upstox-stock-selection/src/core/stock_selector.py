@@ -608,17 +608,18 @@ class UpstoxStockSelector:
         
         return df
     
-    def _detect_signals(self, df: pd.DataFrame, symbol: str) -> List[Dict]:
+    def _detect_signals(self, df: pd.DataFrame, symbol: str, require_exit_price: bool = False) -> List[Dict]:
         """
         Detect breakout and breakdown signals.
         
         Uses PREVIOUS bar's swing high/low for comparison (not current bar).
         Start index = max(LOOKBACK_SWING, VOL_WINDOW) + 1 = max(12, 70) + 1 = 71
-        Loop ends at len(df) - HOLD_BARS to ensure exit bar exists.
         
         Args:
             df: DataFrame with OHLCV and calculated indicators
             symbol: Trading symbol
+            require_exit_price: If True, only detect signals where exit price can be calculated (for backtesting).
+                               If False, detect all signals including real-time (for live alerts).
             
         Returns:
             List of alert dictionaries
@@ -629,16 +630,18 @@ class UpstoxStockSelector:
         # Match reference: int(max(LOOKBACK_SWING, VOL_WINDOW)) + 1
         start_i = int(max(LOOKBACK_SWING, VOL_WINDOW)) + 1
         
-        # End index: len(df) - HOLD_BARS to ensure we have enough bars for exit
-        # But allow checking up to the last bar if it's today's data (for real-time alerts)
-        end_i = len(df) - HOLD_BARS
-        end_i_realtime = len(df)  # Allow checking all bars for real-time alerts
+        # End index: 
+        # - For backtesting: len(df) - HOLD_BARS to ensure we have enough bars for exit price
+        # - For real-time: len(df) to allow checking all bars (exit price optional)
+        if require_exit_price:
+            end_i = len(df) - HOLD_BARS
+        else:
+            end_i = len(df)  # Allow checking all bars for real-time alerts
         
-        if start_i >= end_i_realtime:
+        if start_i >= end_i:
             return alerts  # Not enough data
         
-        # Use end_i_realtime to include today's data, but handle exit price calculation
-        for i in range(start_i, end_i_realtime):
+        for i in range(start_i, end_i):
             prev_close = df['close'].iloc[i-1]
             curr_close = df['close'].iloc[i]
             
@@ -677,14 +680,20 @@ class UpstoxStockSelector:
                 else:
                     entry_price = curr_close
                 
-                # Exit: close after HOLD_BARS bars (i+HOLD_BARS) if available, else current close
-                if i + HOLD_BARS < len(df):
+                # Exit price and P&L calculation
+                if require_exit_price:
+                    # For backtesting: exit price is required
                     exit_price = df['close'].iloc[i+HOLD_BARS]
                     pnl_pct = ((exit_price - entry_price) / entry_price) * 100.0
                 else:
-                    # For real-time alerts without enough bars, use current close as exit
-                    exit_price = curr_close
-                    pnl_pct = 0.0  # P&L not calculated yet
+                    # For real-time alerts: exit price not required, set to None
+                    if i + HOLD_BARS < len(df):
+                        exit_price = df['close'].iloc[i+HOLD_BARS]
+                        pnl_pct = ((exit_price - entry_price) / entry_price) * 100.0
+                    else:
+                        # Not enough bars for exit - this is fine for real-time alerts
+                        exit_price = None
+                        pnl_pct = None
                 
                 alerts.append({
                     'symbol': symbol,
@@ -712,15 +721,22 @@ class UpstoxStockSelector:
                 else:
                     entry_price = curr_close
                 
-                # Exit: close after HOLD_BARS bars (i+HOLD_BARS) if available, else current close
-                if i + HOLD_BARS < len(df):
+                # Exit price and P&L calculation
+                if require_exit_price:
+                    # For backtesting: exit price is required
                     exit_price = df['close'].iloc[i+HOLD_BARS]
                     # For breakdown: (entry - exit) / entry * 100
                     pnl_pct = ((entry_price - exit_price) / entry_price) * 100.0
                 else:
-                    # For real-time alerts without enough bars, use current close as exit
-                    exit_price = curr_close
-                    pnl_pct = 0.0  # P&L not calculated yet
+                    # For real-time alerts: exit price not required, set to None
+                    if i + HOLD_BARS < len(df):
+                        exit_price = df['close'].iloc[i+HOLD_BARS]
+                        # For breakdown: (entry - exit) / entry * 100
+                        pnl_pct = ((entry_price - exit_price) / entry_price) * 100.0
+                    else:
+                        # Not enough bars for exit - this is fine for real-time alerts
+                        exit_price = None
+                        pnl_pct = None
                 
                 alerts.append({
                     'symbol': symbol,
@@ -761,7 +777,21 @@ class UpstoxStockSelector:
                 'profit_factor': 0.0
             }
         
-        pnl_values = [alert['pnl_pct'] for alert in alerts]
+        # Filter out alerts without P&L (real-time alerts without exit price)
+        # Only include alerts with valid P&L values for statistics
+        pnl_values = [alert.get('pnl_pct') for alert in alerts if alert.get('pnl_pct') is not None and isinstance(alert.get('pnl_pct'), (int, float))]
+        
+        if not pnl_values:
+            # No valid P&L values (all are real-time alerts without exit price)
+            return {
+                'symbol': symbol,
+                'trade_count': len(alerts),
+                'win_rate': 0.0,
+                'avg_gain_pct': 0.0,
+                'net_pnl_pct': 0.0,
+                'profit_factor': 0.0
+            }
+        
         winning_trades = [pnl for pnl in pnl_values if pnl > 0]
         losing_trades = [pnl for pnl in pnl_values if pnl < 0]
         
