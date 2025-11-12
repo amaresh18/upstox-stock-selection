@@ -27,6 +27,21 @@ from src.config.settings import (
     DEFAULT_NSE_JSON_PATH,
 )
 from src.utils.oauth_helper import UpstoxOAuthHelper
+from src.ui.components import (
+    render_navbar,
+    render_card,
+    render_alert_card,
+    render_section_header,
+    render_badge,
+    render_metric_card,
+    render_empty_state,
+    render_group_label,
+    render_divider,
+    show_toast,
+    render_tooltip_enhanced,
+    render_theme_switcher,
+    get_theme_css
+)
 
 # Page config with premium iOS-inspired design
 # Mobile-optimized: sidebar collapses on small screens
@@ -42,26 +57,37 @@ st.set_page_config(
     }
 )
 
-# Inject custom CSS for Zerodha Kite-inspired design
+# Inject custom CSS for Zerodha Kite Premium design system
 def inject_custom_css():
-    """Inject custom CSS matching Zerodha Kite's exact design system."""
-    css_file_path = os.path.join(os.path.dirname(__file__), 'assets', 'css', 'zerodha-kite.css')
+    """Inject premium CSS matching Zerodha Kite's world-class design system."""
+    # Initialize theme in session state
+    if 'theme' not in st.session_state:
+        st.session_state.theme = 'light'
+    
+    # Try premium CSS first, fallback to original
+    css_file_path = os.path.join(os.path.dirname(__file__), 'assets', 'css', 'kite-premium.css')
+    if not os.path.exists(css_file_path):
+        css_file_path = os.path.join(os.path.dirname(__file__), 'assets', 'css', 'zerodha-kite.css')
+    
+    base_css = ""
     if os.path.exists(css_file_path):
         with open(css_file_path, 'r') as f:
-            css = f.read()
-        st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
+            base_css = f.read()
     else:
         # Fallback inline CSS - Kite Style
-        st.markdown("""
-        <style>
+        base_css = """
         body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #F5F7FA; font-size: 14px; }
         .main .block-container { padding: 1.5rem; max-width: 1400px; background: #F5F7FA; }
         h1 { font-size: 1.875rem; font-weight: 600; color: #1E293B; letter-spacing: -0.01em; }
         .stButton > button { background: #2962FF; border-radius: 6px; font-weight: 500; padding: 0.75rem 1.25rem; font-size: 0.875rem; }
         .stButton > button:hover { background: #1E4ED8; }
         [data-testid="stSidebar"] { background: #FFFFFF; border-right: 1px solid #E2E8F0; }
-        </style>
-        """, unsafe_allow_html=True)
+        """
+    
+    # Add theme-specific CSS
+    theme_css = get_theme_css(st.session_state.theme)
+    
+    st.markdown(f'<style>{base_css}{theme_css}</style>', unsafe_allow_html=True)
 
 # Inject CSS
 inject_custom_css()
@@ -139,52 +165,43 @@ def load_default_values():
     # Clear results
     st.session_state.results = None
     
-    st.success("✅ Default values loaded! All parameters reset to system defaults.")
+    # Show toast notification
+    show_toast("Default values loaded! All parameters reset to system defaults.", "success")
 
 def main():
-    """Main Streamlit app with Zerodha Kite-inspired design."""
+    """Main Streamlit app with Zerodha Kite Premium design."""
     initialize_session_state()
     
-    # Kite-Style Header - Clean and Minimal
-    st.markdown("""
-    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; 
-                padding: 2rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-            <h1 style="font-size: 1.875rem; font-weight: 600; color: #1E293B; margin: 0; 
-                       letter-spacing: -0.01em; line-height: 1.3;">
-                Stock Selection
-            </h1>
-        </div>
-        <p style="color: #64748B; font-size: 0.875rem; margin: 0; line-height: 1.5;">
-            Professional algorithmic trading platform for identifying high-probability opportunities
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Premium Navbar
+    render_navbar(
+        title="Stock Selection",
+        subtitle="Professional algorithmic trading platform"
+    )
     
-    # Sidebar for configuration - Kite Style (Clean, Minimal)
+    # Premium Hero Section
+    render_card(
+        title="Stock Selection System",
+        subtitle="Identify high-probability trading opportunities with advanced algorithmic analysis",
+        variant="floating",
+        class_name="kite-fade-in"
+    )
+    
+    # Premium Sidebar Configuration
     with st.sidebar:
-        st.markdown("""
-        <div style="padding: 0 0 1.5rem 0; border-bottom: 1px solid #F1F5F9; margin-bottom: 1.5rem;">
-            <h2 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0 0 0.5rem 0; 
-                       letter-spacing: -0.01em;">
-                Configuration
-            </h2>
-            <p style="color: #64748B; font-size: 0.875rem; margin: 0; line-height: 1.5;">
-                Customize analysis parameters
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        # Theme switcher at top of sidebar
+        if render_theme_switcher():
+            st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
+            st.rerun()
         
-        # Group 1: Time Settings - Kite Style Card
-        st.markdown("""
-        <div style="background: #FFFFFF; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; 
-                    border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
-            <div style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
-                       text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
-                Time Settings
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        render_divider()
+        
+        render_section_header(
+            title="Configuration",
+            subtitle="Customize analysis parameters"
+        )
+        
+        # Group 1: Time Settings
+        render_group_label("Time Settings")
         
         with st.container():
             
@@ -340,16 +357,8 @@ def main():
         # Save to session state
         st.session_state.selected_candle_dt = selected_candle_dt
 
-        # Group 2: Results Scope - Kite Style Card
-        st.markdown("""
-        <div style="background: #FFFFFF; border-radius: 8px; padding: 1rem; margin: 1rem 0; 
-                    border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
-            <div style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
-                       text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
-                Results Scope
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        # Group 2: Results Scope
+        render_group_label("Results Scope")
         
         with st.container():
             
@@ -377,16 +386,8 @@ def main():
             if include_historical and only_recent_candle:
                 st.info("ℹ️ Historical results enabled. Recent-candle filter will be ignored.")
         
-        # Group 3: Trading Parameters - Kite Style Card
-        st.markdown("""
-        <div style="background: #FFFFFF; border-radius: 8px; padding: 1rem; margin: 1rem 0; 
-                    border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
-            <div style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
-                       text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
-                Trading Parameters
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        # Group 3: Trading Parameters
+        render_group_label("Trading Parameters")
         
         with st.container():
             
@@ -439,16 +440,8 @@ def main():
             )
             st.session_state.params['hold_bars'] = hold_bars
         
-        # Group 4: Data & Performance - Kite Style Card
-        st.markdown("""
-        <div style="background: #FFFFFF; border-radius: 8px; padding: 1rem; margin: 1rem 0; 
-                    border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);">
-            <div style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
-                       text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
-                Data & Performance
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        # Group 4: Data & Performance
+        render_group_label("Data & Performance")
         
         with st.container():
             
@@ -492,20 +485,13 @@ def main():
         with col2:
             if st.button("💾 Save Config", use_container_width=True):
                 # Params are already synced from widgets above, just confirm
-                st.success("✅ Configuration saved! All parameters are ready to use.")
+                show_toast("Configuration saved! All parameters are ready to use.", "success")
     
-    # Main content area - Kite Style (Clean, Minimal)
-    st.markdown("""
-    <div style="margin: 0 0 1.5rem 0;">
-        <h2 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0 0 0.5rem 0; 
-                   letter-spacing: -0.01em;">
-            Analysis Dashboard
-        </h2>
-        <p style="color: #64748B; font-size: 0.875rem; margin: 0; line-height: 1.5;">
-            Configure parameters and execute comprehensive stock analysis
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Premium main content area
+    render_section_header(
+        title="Analysis Dashboard",
+        subtitle="Configure parameters and execute comprehensive stock analysis"
+    )
     
     # API Credentials Card - Kite Style
     st.markdown("""
@@ -834,12 +820,13 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
     
     if clear_button:
         st.session_state.results = None
-        st.success("✅ Results cleared!")
+        show_toast("Results cleared!", "info")
         st.rerun()
     
     # Run analysis
     if run_button:
         if not api_key or not access_token:
+            show_toast("Please provide both API Key and Access Token!", "error")
             st.error("❌ Please provide both API Key and Access Token!")
         else:
             st.session_state.running = True
@@ -948,8 +935,10 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                             )
                             
                             if settings_match:
+                                show_toast(f"Analysis complete! Found {len(alerts_df)} alerts.", "success")
                                 st.success(f"✅ Analysis complete! Found {len(alerts_df)} alerts using the configured parameters.")
                             else:
+                                show_toast("Analysis complete, but settings verification failed!", "warning")
                                 st.warning(f"⚠️ Analysis complete with {len(alerts_df)} alerts, but settings verification failed!")
                                 st.warning(f"Requested: {st.session_state.params}")
                                 st.warning(f"Actual: {actual_settings}")
@@ -965,24 +954,18 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                         st.session_state.running = False
                         
                 except Exception as e:
+                    show_toast(f"Error: {str(e)}", "error")
                     st.error(f"❌ Error: {str(e)}")
                     import traceback
                     st.code(traceback.format_exc())
                     st.session_state.running = False
     
-    # Display results - Kite Style (Clean, Minimal)
+    # Premium results display
     if st.session_state.results:
-        st.markdown("""
-        <div style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 1px solid #F1F5F9;">
-            <h2 style="font-size: 1.5rem; font-weight: 600; color: #1E293B; margin: 0 0 0.5rem 0; 
-                       letter-spacing: -0.01em;">
-                Analysis Results
-            </h2>
-            <p style="color: #64748B; font-size: 0.875rem; margin: 0; line-height: 1.5;">
-                Review your comprehensive stock selection analysis
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        render_section_header(
+            title="Analysis Results",
+            subtitle="Review your comprehensive stock selection analysis"
+        )
         
         results = st.session_state.results
         summary_df = results['summary']
@@ -1041,84 +1024,36 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
             alerts_df = filtered_alerts
         
         # If user wants only the recent closed candle (intraday decision view),
-        # show Kite-style alerts (clean, minimal, professional)
+        # show premium Kite-style alerts
         if not include_historical and only_recent_candle:
-            st.markdown("""
-            <div style="margin: 1.5rem 0 1rem 0;">
-                <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0 0 0.5rem 0; 
-                           letter-spacing: -0.01em;">
-                    Intraday Alerts
-                </h3>
-                <p style="color: #64748B; font-size: 0.875rem; margin: 0; line-height: 1.5;">
-                    Recent closed candle alerts sorted by volume ratio (highest first)
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+            render_section_header(
+                title="Intraday Alerts",
+                subtitle="Recent closed candle alerts sorted by volume ratio (highest first)"
+            )
             
             if alerts_df.empty:
-                # More informative message
+                # Premium empty state
                 candle_info = f"candle {selected_candle_dt.strftime('%H:%M')} - {candle_end.strftime('%H:%M')} IST" if selected_candle_dt else "selected candle"
-                st.info(f"⚪ **No Alerts Detected**\n\nNo stocks met the selection criteria for the {candle_info}.\n\nThis could mean:\n- No breakouts/breakdowns occurred in this candle\n- Volume thresholds were not met\n- Swing levels were not breached")
+                render_empty_state(
+                    icon="📊",
+                    title="No Alerts Detected",
+                    message=f"No stocks met the selection criteria for the {candle_info}.\n\nThis could mean:\n- No breakouts/breakdowns occurred in this candle\n- Volume thresholds were not met\n- Swing levels were not breached"
+                )
             else:
                 # Sort by volume ratio (highest first) to surface strongest moves
                 if 'vol_ratio' in alerts_df.columns:
                     alerts_df = alerts_df.sort_values('vol_ratio', ascending=False)
 
-                # Render Kite-style alert cards (clean, minimal, professional)
+                # Render premium alert cards using component
                 for idx, r in alerts_df.iterrows():
-                    symbol = r.get('symbol', 'N/A')
-                    signal_type = r.get('signal_type', 'N/A')
-                    price = r.get('price', None)
-                    vol_ratio = r.get('vol_ratio', None)
-                    swing_high = r.get('swing_high', None)
-                    swing_low = r.get('swing_low', None)
-                    ts = r.get('timestamp', '')
-                    
-                    # Kite color scheme (subtle, professional)
-                    border_color = "#00C853" if signal_type == 'BREAKOUT' else "#F44336"
-                    bg_color = "#FFFFFF"
-                    badge_bg = "rgba(0, 200, 83, 0.08)" if signal_type == 'BREAKOUT' else "rgba(244, 67, 54, 0.08)"
-                    badge_text = "#00C853" if signal_type == 'BREAKOUT' else "#F44336"
-                    
-                    # Build alert card
-                    if signal_type == 'BREAKOUT':
-                        signal_badge = "BREAKOUT"
-                        level = f"Above ₹{swing_high:.2f}" if swing_high else "N/A"
-                    else:
-                        signal_badge = "BREAKDOWN"
-                        level = f"Below ₹{swing_low:.2f}" if swing_low else "N/A"
-                    
-                    details = []
-                    if isinstance(price, (int, float)):
-                        details.append(f"<span style='color: #64748B; font-size: 0.875rem;'>Price:</span> <span style='color: #1E293B; font-weight: 500; font-size: 0.875rem;'>₹{price:.2f}</span>")
-                    if isinstance(vol_ratio, (int, float)):
-                        details.append(f"<span style='color: #64748B; font-size: 0.875rem;'>Volume:</span> <span style='color: #1E293B; font-weight: 500; font-size: 0.875rem;'>{vol_ratio:.2f}×</span>")
-                    if ts:
-                        details.append(f"<span style='color: #64748B; font-size: 0.875rem;'>Time:</span> <span style='color: #1E293B; font-weight: 500; font-size: 0.875rem;'>{ts}</span>")
-                    
-                    st.markdown(f"""
-                    <div style="background: {bg_color}; border-left: 3px solid {border_color}; 
-                                border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem;
-                                border: 1px solid #E2E8F0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-                                transition: all 0.15s ease;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <div style="font-weight: 600; font-size: 1rem; color: #1E293B; letter-spacing: -0.01em;">
-                                {symbol}
-                            </div>
-                            <span style="background: {badge_bg}; color: {badge_text}; padding: 0.25rem 0.5rem; 
-                                        border-radius: 4px; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; 
-                                        letter-spacing: 0.05em;">
-                                {signal_badge}
-                            </span>
-                        </div>
-                        <div style="color: #64748B; font-size: 0.875rem; margin-bottom: 0.75rem; font-weight: 400;">
-                            {level}
-                        </div>
-                        <div style="color: #1E293B; font-size: 0.875rem; display: flex; gap: 1.25rem; flex-wrap: wrap; font-weight: 400;">
-                            {' | '.join(details)}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    render_alert_card(
+                        symbol=r.get('symbol', 'N/A'),
+                        signal_type=r.get('signal_type', 'N/A'),
+                        price=r.get('price', None),
+                        vol_ratio=r.get('vol_ratio', None),
+                        swing_level=r.get('swing_high', None) if r.get('signal_type') == 'BREAKOUT' else r.get('swing_low', None),
+                        timestamp=r.get('timestamp', '')
+                    )
 
                 # Download button - iOS Style
                 csv = alerts_df.to_csv(index=False)
@@ -1131,44 +1066,38 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                 )
         else:
             # Full analytical view (includes historical if selected)
-            # Summary statistics - Kite Style
-            st.markdown("""
-            <div style="margin: 1.5rem 0 1rem 0; padding-bottom: 1rem; border-bottom: 1px solid #F1F5F9;">
-                <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0; 
-                           letter-spacing: -0.01em;">
-                    Summary Statistics
-                </h3>
-            </div>
-            """, unsafe_allow_html=True)
+            # Premium summary statistics
+            render_section_header(
+                title="Summary Statistics",
+                subtitle="Comprehensive analysis overview"
+            )
             
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
-                st.metric("Total Symbols", len(summary_df))
+                render_metric_card("Total Symbols", str(len(summary_df)))
             
             with col2:
                 total_trades = summary_df['trade_count'].sum() if 'trade_count' in summary_df.columns else 0
-                st.metric("Total Trades", int(total_trades))
+                render_metric_card("Total Trades", str(int(total_trades)))
             
             with col3:
                 total_alerts = len(alerts_df)
-                st.metric("Total Alerts", total_alerts)
+                render_metric_card("Total Alerts", str(total_alerts))
             
             with col4:
                 if total_trades > 0:
                     avg_win_rate = summary_df['win_rate'].mean() if 'win_rate' in summary_df.columns else 0
-                    st.metric("Avg Win Rate", f"{avg_win_rate:.2f}%")
+                    render_metric_card("Avg Win Rate", f"{avg_win_rate:.2f}%")
+                else:
+                    render_metric_card("Avg Win Rate", "N/A")
             
-            # Alerts table - Kite Style
+            # Premium alerts table
             if not alerts_df.empty:
-                st.markdown("""
-                <div style="margin: 1.5rem 0 1rem 0; padding-bottom: 1rem; border-bottom: 1px solid #F1F5F9;">
-                    <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0; 
-                               letter-spacing: -0.01em;">
-                        Alerts
-                    </h3>
-                </div>
-                """, unsafe_allow_html=True)
+                render_section_header(
+                    title="Alerts",
+                    subtitle="All detected trading signals"
+                )
                 
                 # Ensure dataframe is Arrow-compatible by converting mixed types
                 alerts_df_display = alerts_df.copy()
@@ -1192,16 +1121,12 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                     use_container_width=True
                 )
             
-            # Summary table - Kite Style
+            # Premium summary table
             if not summary_df.empty:
-                st.markdown("""
-                <div style="margin: 1.5rem 0 1rem 0; padding-bottom: 1rem; border-bottom: 1px solid #F1F5F9;">
-                    <h3 style="font-size: 1.25rem; font-weight: 600; color: #1E293B; margin: 0; 
-                               letter-spacing: -0.01em;">
-                        Detailed Summary
-                    </h3>
-                </div>
-                """, unsafe_allow_html=True)
+                render_section_header(
+                    title="Detailed Summary",
+                    subtitle="Per-symbol analysis breakdown"
+                )
                 
                 # Ensure dataframe is Arrow-compatible by converting mixed types
                 summary_df_display = summary_df.copy()

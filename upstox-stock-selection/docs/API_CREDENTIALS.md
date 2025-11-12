@@ -4,7 +4,7 @@
 
 **API Key**: `e3d3c1d1-5338-4efa-b77f-c83ea604ea43`
 
-**Access Token**: `eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzUUFSVEoiLCJqdGkiOiI2OTEyNDg5YjQ3ODQ3MjdlNWY4YjIyYWIiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2MjgwNTkxNSwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzYyODEyMDAwfQ.EG-kDo3g1G5u5Cl_HrnBo612vvYNwASV8KNZd3XHoiA`
+**Access Token**: `eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzUUFSVEoiLCJqdGkiOiI2OTE0MDE1MDY0ZmYzYTViMWM4YTk4NTQiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2MjkxODczNiwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzYyOTg0ODAwfQ.ETjfi9F3QQqCqCtiwypBSsMF_zb_zqfUfifv3t6q7sI`
 
 **API Secret**: `9kbfgnlibw` (not currently used by scripts, kept for reference)
 
@@ -24,7 +24,7 @@ This sets the credentials for the current PowerShell session.
 
 ```powershell
 $env:UPSTOX_API_KEY='e3d3c1d1-5338-4efa-b77f-c83ea604ea43'
-$env:UPSTOX_ACCESS_TOKEN='eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzUUFSVEoiLCJqdGkiOiI2OTEyNDg5YjQ3ODQ3MjdlNWY4YjIyYWIiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2MjgwNTkxNSwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzYyODEyMDAwfQ.EG-kDo3g1G5u5Cl_HrnBo612vvYNwASV8KNZd3XHoiA'
+$env:UPSTOX_ACCESS_TOKEN='eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzUUFSVEoiLCJqdGkiOiI2OTE0MDE1MDY0ZmYzYTViMWM4YTk4NTQiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2MjkxODczNiwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzYyOTg0ODAwfQ.ETjfi9F3QQqCqCtiwypBSsMF_zb_zqfUfifv3t6q7sI'
 ```
 
 ### Method 3: Permanent Windows Environment Variables
@@ -37,7 +37,7 @@ $env:UPSTOX_ACCESS_TOKEN='eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSF
    - Variable value: `e3d3c1d1-5338-4efa-b77f-c83ea604ea43`
 5. Click **New** again:
    - Variable name: `UPSTOX_ACCESS_TOKEN`
-   - Variable value: `eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzUUFSVEoiLCJqdGkiOiI2OTEyNDg5YjQ3ODQ3MjdlNWY4YjIyYWIiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2MjgwNTkxNSwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzYyODEyMDAwfQ.EG-kDo3g1G5u5Cl_HrnBo612vvYNwASV8KNZd3XHoiA`
+   - Variable value: `eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzUUFSVEoiLCJqdGkiOiI2OTE0MDE1MDY0ZmYzYTViMWM4YTk4NTQiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2MjkxODczNiwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzYyOTg0ODAwfQ.ETjfi9F3QQqCqCtiwypBSsMF_zb_zqfUfifv3t6q7sI`
 6. Restart PowerShell/terminal for changes to take effect
 
 ### Method 4: For Railway Deployment
@@ -47,7 +47,7 @@ $env:UPSTOX_ACCESS_TOKEN='eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSF
 3. Go to **Variables** tab
 4. Add:
    - `UPSTOX_API_KEY` = `e3d3c1d1-5338-4efa-b77f-c83ea604ea43`
-   - `UPSTOX_ACCESS_TOKEN` = `eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzUUFSVEoiLCJqdGkiOiI2OTEyNDg5YjQ3ODQ3MjdlNWY4YjIyYWIiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2MjgwNTkxNSwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzYyODEyMDAwfQ.EG-kDo3g1G5u5Cl_HrnBo612vvYNwASV8KNZd3XHoiA`
+   - `UPSTOX_ACCESS_TOKEN` = `eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzUUFSVEoiLCJqdGkiOiI2OTE0MDE1MDY0ZmYzYTViMWM4YTk4NTQiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2MjkxODczNiwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzYyOTg0ODAwfQ.ETjfi9F3QQqCqCtiwypBSsMF_zb_zqfUfifv3t6q7sI`
 
 ## Verify Credentials Are Set
 
