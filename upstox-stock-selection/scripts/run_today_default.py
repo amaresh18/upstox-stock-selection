@@ -99,10 +99,12 @@ async def run_today_default():
     
     # Initialize selector with default settings
     print("\n3. Initializing stock selector with default settings...")
+    # Enable verbose logging for this script (local testing)
     selector = UpstoxStockSelector(
         api_key=api_key,
         access_token=access_token,
-        nse_json_path=DEFAULT_NSE_JSON_PATH
+        nse_json_path=DEFAULT_NSE_JSON_PATH,
+        verbose=True  # Keep verbose for local testing
     )
     
     # Override settings to ensure defaults are used

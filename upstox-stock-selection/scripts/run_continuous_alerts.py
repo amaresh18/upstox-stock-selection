@@ -348,7 +348,9 @@ class ContinuousAlertMonitor:
         
         # Initialize selector
         print("\nInitializing stock selector...")
-        self.selector = UpstoxStockSelector(api_key, access_token)
+        # Disable verbose logging in production (Railway) to avoid rate limits
+        verbose_logging = os.getenv('VERBOSE_LOGGING', 'false').lower() == 'true'
+        self.selector = UpstoxStockSelector(api_key, access_token, verbose=verbose_logging)
         
         # Load symbols
         print("Loading symbols...")

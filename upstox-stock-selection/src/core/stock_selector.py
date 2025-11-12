@@ -32,7 +32,7 @@ from ..config.settings import (
 class UpstoxStockSelector:
     """Stock selection system using Upstox API v3."""
     
-    def __init__(self, api_key: str, access_token: str, nse_json_path: str = None):
+    def __init__(self, api_key: str, access_token: str, nse_json_path: str = None, verbose: bool = None):
         """
         Initialize the stock selector.
         
@@ -40,6 +40,7 @@ class UpstoxStockSelector:
             api_key: Upstox API key
             access_token: Upstox access token
             nse_json_path: Path to NSE.json file with instrument mappings
+            verbose: Enable verbose logging. If None, reads from VERBOSE_LOGGING env var (default: False)
         """
         self.api_key = api_key
         self.access_token = access_token
@@ -49,6 +50,8 @@ class UpstoxStockSelector:
         self.alerts = []
         self.summary_stats = []
         self.yf_historical_data = {}  # Cache for Yahoo Finance batch downloaded data
+        # Control logging verbosity (reduce for Railway to avoid rate limits)
+        self.verbose = verbose if verbose is not None else os.getenv('VERBOSE_LOGGING', 'false').lower() == 'true'
     
     def _interval_to_upstox_format(self, interval: str) -> Tuple[str, int]:
         """
@@ -275,7 +278,8 @@ class UpstoxStockSelector:
         if days is None:
             days = DEFAULT_HISTORICAL_DAYS
         
-        print(f"  Fetching historical data for {symbol} with {days} days of history")
+        if self.verbose:
+            print(f"  Fetching historical data for {symbol} with {days} days of history")
             
         try:
             # Use target_date if provided, otherwise use current date
@@ -290,13 +294,16 @@ class UpstoxStockSelector:
             hist_df = pd.DataFrame()
             if symbol in self.yf_historical_data:
                 hist_df = self.yf_historical_data[symbol].copy()
-                print(f"  Using cached Yahoo Finance data for {symbol}: {len(hist_df)} bars (requested {days} days)")
+                if self.verbose:
+                    print(f"  Using cached Yahoo Finance data for {symbol}: {len(hist_df)} bars (requested {days} days)")
             else:
-                print(f"  Warning: No Yahoo Finance data found for {symbol} in cache")
+                if self.verbose:
+                    print(f"  Warning: No Yahoo Finance data found for {symbol} in cache")
             
             # Step 2: Fetch historical data from Upstox API (if Yahoo Finance failed or not available)
             if hist_df.empty and self.access_token and self.access_token != 'dummy':
-                print(f"  Fetching historical data from Upstox API for {symbol} (last {days} days)...")
+                if self.verbose:
+                    print(f"  Fetching historical data from Upstox API for {symbol} (last {days} days)...")
                 try:
                     start_date = end_date - timedelta(days=days)
                     hist_upstox = await self._fetch_historical_data_from_upstox_api(
@@ -308,31 +315,37 @@ class UpstoxStockSelector:
                         hist_upstox = hist_upstox[hist_upstox.index.date < today_date]
                         if not hist_upstox.empty:
                             hist_df = hist_upstox.copy()
-                            print(f"Got {len(hist_df)} historical bars from Upstox API for {symbol}")
+                            if self.verbose:
+                                print(f"Got {len(hist_df)} historical bars from Upstox API for {symbol}")
                 except Exception as e:
-                    print(f"Error fetching historical data from Upstox for {symbol}: {e}")
+                    if self.verbose:
+                        print(f"Error fetching historical data from Upstox for {symbol}: {e}")
             
             # Step 3: Fetch current day data from Upstox API (or specific date)
             today_df = None
             if self.access_token and self.access_token != 'dummy':
-                if target_date:
-                    print(f"Fetching data for {target_date.strftime('%Y-%m-%d')} from Upstox for {symbol}...")
-                else:
-                    print(f"Fetching current day data from Upstox for {symbol}...")
+                if self.verbose:
+                    if target_date:
+                        print(f"Fetching data for {target_date.strftime('%Y-%m-%d')} from Upstox for {symbol}...")
+                    else:
+                        print(f"Fetching current day data from Upstox for {symbol}...")
                 try:
                     today_df = await self._fetch_today_data_from_upstox_api(instrument_key, symbol, target_date=target_date)
                     if today_df is not None and not today_df.empty:
-                        if target_date:
-                            print(f"Got {len(today_df)} bars from Upstox for {symbol} ({target_date.strftime('%Y-%m-%d')})")
-                        else:
-                            print(f"Got {len(today_df)} bars from Upstox for {symbol} (today)")
+                        if self.verbose:
+                            if target_date:
+                                print(f"Got {len(today_df)} bars from Upstox for {symbol} ({target_date.strftime('%Y-%m-%d')})")
+                            else:
+                                print(f"Got {len(today_df)} bars from Upstox for {symbol} (today)")
                 except Exception as e:
-                    print(f"Error fetching data from Upstox for {symbol}: {e}")
+                    if self.verbose:
+                        print(f"Error fetching data from Upstox for {symbol}: {e}")
                     today_df = None
             
             # Step 4: Combine historical and current day data
             if hist_df.empty and (today_df is None or today_df.empty):
-                print(f"No data available for {symbol}")
+                if self.verbose:
+                    print(f"No data available for {symbol}")
                 return None
             
             # Ensure both dataframes have timestamp as index (not column) for consistency
@@ -368,7 +381,7 @@ class UpstoxStockSelector:
             before_dedup = len(df)
             df = df[~df.index.duplicated(keep='first')]
             after_dedup = len(df)
-            if before_dedup != after_dedup:
+            if before_dedup != after_dedup and self.verbose:
                 print(f"  Removed {before_dedup - after_dedup} duplicate timestamps for {symbol}")
             
             # Filter out incomplete candles (current hour's candle that hasn't completed yet)
@@ -394,7 +407,7 @@ class UpstoxStockSelector:
                         before_filter = len(df)
                         df = df[df.index < cutoff_time]
                         after_filter = len(df)
-                        if before_filter != after_filter:
+                        if before_filter != after_filter and self.verbose:
                             print(f"  Filtered out {before_filter - after_filter} incomplete candle(s) for {symbol} (current hour: {current_hour}:15)")
             
             # Ensure we have enough data points (at least 70 bars for calculations)
@@ -410,7 +423,8 @@ class UpstoxStockSelector:
             if 'timestamp' not in df.columns:
                 df['timestamp'] = df.index
             
-            print(f"Combined data for {symbol}: {len(df)} bars (Historical: {len(hist_df) if not hist_df.empty else 0}, Today: {len(today_df) if today_df is not None and not today_df.empty else 0})")
+            if self.verbose:
+                print(f"Combined data for {symbol}: {len(df)} bars (Historical: {len(hist_df) if not hist_df.empty else 0}, Today: {len(today_df) if today_df is not None and not today_df.empty else 0})")
             return df
                         
         except Exception as e:
@@ -457,7 +471,8 @@ class UpstoxStockSelector:
             # Read interval fresh from settings
             current_interval = settings.DEFAULT_INTERVAL
             unit, interval_value = self._interval_to_upstox_format(current_interval)
-            print(f"  Fetching historical data for {symbol} with interval: {current_interval} ({unit}/{interval_value})")
+            if self.verbose:
+                print(f"  Fetching historical data for {symbol} with interval: {current_interval} ({unit}/{interval_value})")
             url = f"{UPSTOX_BASE_URL}/historical-candle/{encoded_instrument_key}/{unit}/{interval_value}/{end_str}/{start_str}"
             params = {}
             
@@ -518,7 +533,8 @@ class UpstoxStockSelector:
                             return hist_df
                     else:
                         error_text = await response.text()
-                        print(f"  Upstox API error for {symbol}: Status {response.status}, {error_text[:200]}")
+                        if self.verbose:
+                            print(f"  Upstox API error for {symbol}: Status {response.status}, {error_text[:200]}")
             return None
             
         except Exception as e:
@@ -571,16 +587,18 @@ class UpstoxStockSelector:
                 # For historical dates (not today), use historical candle API with date range
                 # Format: /historical-candle/{instrument_key}/{unit}/{interval}/{to_date}/{from_date}
                 date_str = target_date.strftime("%Y-%m-%d")
-                print(f"  Fetching data for {symbol} on {date_str} with interval: {current_interval} ({unit}/{interval_value})")
+                if self.verbose:
+                    print(f"  Fetching data for {symbol} on {date_str} with interval: {current_interval} ({unit}/{interval_value})")
                 url = f"{UPSTOX_BASE_URL}/historical-candle/{encoded_instrument_key}/{unit}/{interval_value}/{date_str}/{date_str}"
             else:
                 # Use Upstox API v3 Intraday Candle Data endpoint for current day
                 # Format: /historical-candle/intraday/{instrument_key}/{unit}/{interval}
                 # This API automatically returns current trading day data
-                if target_date:
-                    print(f"  Fetching intraday data for {symbol} (today: {target_date.strftime('%Y-%m-%d')}) with interval: {current_interval} ({unit}/{interval_value})")
-                else:
-                    print(f"  Fetching intraday data for {symbol} with interval: {current_interval} ({unit}/{interval_value})")
+                if self.verbose:
+                    if target_date:
+                        print(f"  Fetching intraday data for {symbol} (today: {target_date.strftime('%Y-%m-%d')}) with interval: {current_interval} ({unit}/{interval_value})")
+                    else:
+                        print(f"  Fetching intraday data for {symbol} with interval: {current_interval} ({unit}/{interval_value})")
                 url = f"{UPSTOX_BASE_URL}/historical-candle/intraday/{encoded_instrument_key}/{unit}/{interval_value}"
             
             params = {}
@@ -638,7 +656,8 @@ class UpstoxStockSelector:
                             return today_df
                     else:
                         error_text = await response.text()
-                        print(f"  Upstox API error for {symbol} (today): Status {response.status}, {error_text[:200]}")
+                        if self.verbose:
+                            print(f"  Upstox API error for {symbol} (today): Status {response.status}, {error_text[:200]}")
             return None
             
         except Exception as e:
@@ -660,7 +679,8 @@ class UpstoxStockSelector:
         # Read fresh each time to ensure we get the latest values
         lookback_swing = settings.LOOKBACK_SWING
         vol_window = settings.VOL_WINDOW
-        print(f"  Calculating indicators with Lookback Swing: {lookback_swing}, Volume Window: {vol_window}")
+        if self.verbose:
+            print(f"  Calculating indicators with Lookback Swing: {lookback_swing}, Volume Window: {vol_window}")
         
         # Swing High = rolling max High over lookback_swing bars * 0.995
         # Match reference: no min_periods (uses all available data)
@@ -711,7 +731,8 @@ class UpstoxStockSelector:
         vol_mult = settings.VOL_MULT
         hold_bars = settings.HOLD_BARS
         
-        print(f"  Detecting signals with Lookback Swing: {lookback_swing}, Volume Window: {vol_window}, Volume Multiplier: {vol_mult}, Hold Bars: {hold_bars}")
+        if self.verbose:
+            print(f"  Detecting signals with Lookback Swing: {lookback_swing}, Volume Window: {vol_window}, Volume Multiplier: {vol_mult}, Hold Bars: {hold_bars}")
         
         # Start index: max(LOOKBACK_SWING, VOL_WINDOW) + 1
         # Match reference: int(max(LOOKBACK_SWING, VOL_WINDOW)) + 1

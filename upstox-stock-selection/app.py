@@ -806,14 +806,16 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
         
         with st.expander("View Configuration Details", expanded=False):
             config_df = pd.DataFrame([
-                {"Parameter": "Time Interval", "Value": st.session_state.params['interval']},
-                {"Parameter": "Lookback Swing", "Value": st.session_state.params['lookback_swing']},
-                {"Parameter": "Volume Window", "Value": st.session_state.params['vol_window']},
-                {"Parameter": "Volume Multiplier", "Value": st.session_state.params['vol_mult']},
-                {"Parameter": "Hold Bars", "Value": st.session_state.params['hold_bars']},
-                {"Parameter": "Historical Days", "Value": st.session_state.params['historical_days']},
-                {"Parameter": "Max Workers", "Value": st.session_state.params['max_workers']},
+                {"Parameter": "Time Interval", "Value": str(st.session_state.params['interval'])},
+                {"Parameter": "Lookback Swing", "Value": str(st.session_state.params['lookback_swing'])},
+                {"Parameter": "Volume Window", "Value": str(st.session_state.params['vol_window'])},
+                {"Parameter": "Volume Multiplier", "Value": str(st.session_state.params['vol_mult'])},
+                {"Parameter": "Hold Bars", "Value": str(st.session_state.params['hold_bars'])},
+                {"Parameter": "Historical Days", "Value": str(st.session_state.params['historical_days'])},
+                {"Parameter": "Max Workers", "Value": str(st.session_state.params['max_workers'])},
             ])
+            # Ensure all columns are string type for Streamlit Arrow compatibility
+            config_df = config_df.astype(str)
             st.dataframe(config_df, use_container_width=True, hide_index=True)
     
     # Action Buttons - Kite Style
@@ -862,7 +864,9 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                     settings.DEFAULT_INTERVAL = st.session_state.params['interval']
                     
                     # Create selector AFTER settings are overridden
-                    selector = UpstoxStockSelector(api_key, access_token, DEFAULT_NSE_JSON_PATH)
+                    # Disable verbose logging in production (Railway) to avoid rate limits
+                    verbose_logging = os.getenv('VERBOSE_LOGGING', 'false').lower() == 'true'
+                    selector = UpstoxStockSelector(api_key, access_token, DEFAULT_NSE_JSON_PATH, verbose=verbose_logging)
                     
                     # Clear any cached data to ensure fresh analysis
                     selector.yf_historical_data = {}
@@ -1166,7 +1170,17 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                 </div>
                 """, unsafe_allow_html=True)
                 
-                st.dataframe(alerts_df, use_container_width=True, height=400)
+                # Ensure dataframe is Arrow-compatible by converting mixed types
+                alerts_df_display = alerts_df.copy()
+                # Convert numeric columns that might have NaN to float, then to string for display
+                for col in alerts_df_display.columns:
+                    if alerts_df_display[col].dtype == 'object':
+                        # Try to convert to numeric, keep as string if fails
+                        try:
+                            alerts_df_display[col] = pd.to_numeric(alerts_df_display[col], errors='ignore')
+                        except:
+                            pass
+                st.dataframe(alerts_df_display, use_container_width=True, height=400)
                 
                 # Download button - iOS Style
                 csv = alerts_df.to_csv(index=False)
@@ -1189,7 +1203,17 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                 </div>
                 """, unsafe_allow_html=True)
                 
-                st.dataframe(summary_df, use_container_width=True, height=400)
+                # Ensure dataframe is Arrow-compatible by converting mixed types
+                summary_df_display = summary_df.copy()
+                # Convert numeric columns that might have NaN to float
+                for col in summary_df_display.columns:
+                    if summary_df_display[col].dtype == 'object':
+                        # Try to convert to numeric, keep as string if fails
+                        try:
+                            summary_df_display[col] = pd.to_numeric(summary_df_display[col], errors='ignore')
+                        except:
+                            pass
+                st.dataframe(summary_df_display, use_container_width=True, height=400)
                 
                 # Download button - iOS Style
                 csv = summary_df.to_csv(index=False)
