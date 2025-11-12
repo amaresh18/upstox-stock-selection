@@ -563,8 +563,12 @@ class UpstoxStockSelector:
             current_interval = settings.DEFAULT_INTERVAL
             unit, interval_value = self._interval_to_upstox_format(current_interval)
             
-            if target_date:
-                # For specific date, use historical candle API with date range
+            # Check if target_date is today
+            today = datetime.now(self.ist).date()
+            is_today = target_date is None or target_date == today
+            
+            if target_date and not is_today:
+                # For historical dates (not today), use historical candle API with date range
                 # Format: /historical-candle/{instrument_key}/{unit}/{interval}/{to_date}/{from_date}
                 date_str = target_date.strftime("%Y-%m-%d")
                 print(f"  Fetching data for {symbol} on {date_str} with interval: {current_interval} ({unit}/{interval_value})")
@@ -573,7 +577,10 @@ class UpstoxStockSelector:
                 # Use Upstox API v3 Intraday Candle Data endpoint for current day
                 # Format: /historical-candle/intraday/{instrument_key}/{unit}/{interval}
                 # This API automatically returns current trading day data
-                print(f"  Fetching intraday data for {symbol} with interval: {current_interval} ({unit}/{interval_value})")
+                if target_date:
+                    print(f"  Fetching intraday data for {symbol} (today: {target_date.strftime('%Y-%m-%d')}) with interval: {current_interval} ({unit}/{interval_value})")
+                else:
+                    print(f"  Fetching intraday data for {symbol} with interval: {current_interval} ({unit}/{interval_value})")
                 url = f"{UPSTOX_BASE_URL}/historical-candle/intraday/{encoded_instrument_key}/{unit}/{interval_value}"
             
             params = {}
