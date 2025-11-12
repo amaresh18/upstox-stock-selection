@@ -26,6 +26,7 @@ from src.config.settings import (
     DEFAULT_MAX_WORKERS,
     DEFAULT_NSE_JSON_PATH,
 )
+from src.utils.oauth_helper import UpstoxOAuthHelper
 
 # Page config with premium iOS-inspired design
 # Mobile-optimized: sidebar collapses on small screens
@@ -299,7 +300,21 @@ def main():
         now_ist = datetime.now(ist)
         # Only filter by "now" if analyzing today
         if selected_date == date.today():
-            completed = [t for t in candle_times if t <= now_ist]
+            # For hourly candles, a candle at hour H completes at hour H+1:15
+            # So we need to check if the candle has COMPLETED, not just started
+            delta = interval_to_timedelta(interval)
+            completed = []
+            for t in candle_times:
+                # Calculate when this candle completes
+                candle_end = t + delta
+                # For last candle of day, it ends at market close (15:30)
+                market_close_dt = ist.localize(datetime.combine(t.date(), dtime(hour=15, minute=30)))
+                if candle_end > market_close_dt:
+                    candle_end = market_close_dt
+                # Candle is completed if its end time has passed
+                if candle_end <= now_ist:
+                    completed.append(t)
+            
             default_time = completed[-1] if completed else (candle_times[-1] if candle_times else None)
         else:
             # For historical dates, use the last candle
@@ -506,27 +521,272 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
+    # OAuth Login Section - Zerodha Kite Style
     with st.container():
+        st.markdown("""
+        <div style="background: #F8FAFC; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; 
+                    border: 1px solid #E2E8F0;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                <div>
+                    <h4 style="font-size: 0.875rem; font-weight: 600; color: #1E293B; margin: 0;">
+                        🔐 Secure Login with Upstox
+                    </h4>
+                    <p style="font-size: 0.75rem; color: #64748B; margin: 0.25rem 0 0 0;">
+                        Authenticate securely using OAuth 2.0
+                    </p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        col1, col2 = st.columns(2)
+        # Initialize OAuth helper
+        default_api_key = os.getenv('UPSTOX_API_KEY', 'e3d3c1d1-5338-4efa-b77f-c83ea604ea43')
+        default_api_secret = os.getenv('UPSTOX_API_SECRET', '9kbfgnlibw')
+        default_redirect_uri = os.getenv('UPSTOX_REDIRECT_URI', 'https://127.0.0.1')
         
-        with col1:
-            api_key = st.text_input(
-                "Upstox API Key",
-                value=os.getenv('UPSTOX_API_KEY', ''),
-                type="default",
-                help="Your Upstox API Key",
+        # OAuth configuration inputs
+        oauth_col1, oauth_col2 = st.columns([3, 1])
+        
+        with oauth_col1:
+            oauth_api_key = st.text_input(
+                "API Key (Client ID)",
+                value=default_api_key,
+                key="oauth_api_key",
+                help="Your Upstox API Key / Client ID",
                 placeholder="Enter your API key"
             )
         
-        with col2:
-            access_token = st.text_input(
-                "Upstox Access Token",
-                value=os.getenv('UPSTOX_ACCESS_TOKEN', ''),
-                type="default",
-                help="Your Upstox Access Token",
-                placeholder="Enter your access token"
+        with oauth_col2:
+            oauth_api_secret = st.text_input(
+                "API Secret",
+                value=default_api_secret,
+                type="password",
+                key="oauth_api_secret",
+                help="Your Upstox API Secret",
+                placeholder="Enter API secret"
             )
+        
+        redirect_uri = st.text_input(
+            "Redirect URI",
+            value=default_redirect_uri,
+            key="redirect_uri",
+            help="Redirect URI configured in your Upstox app (must match exactly)",
+            placeholder="https://127.0.0.1"
+        )
+        
+        # OAuth Flow
+        oauth_tab1, oauth_tab2 = st.tabs(["🔗 OAuth Login", "📝 Manual Entry"])
+        
+        with oauth_tab1:
+            if oauth_api_key and oauth_api_secret:
+                oauth_helper = UpstoxOAuthHelper(
+                    client_id=oauth_api_key,
+                    client_secret=oauth_api_secret,
+                    redirect_uri=redirect_uri
+                )
+                
+                # Generate authorization URL
+                auth_url = oauth_helper.get_authorization_url()
+                
+                st.markdown("""
+                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; 
+                            padding: 1rem; margin: 1rem 0;">
+                    <p style="font-size: 0.875rem; color: #1E293B; margin: 0 0 0.75rem 0; font-weight: 500;">
+                        Step 1: Click the button below to authorize with Upstox
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Authorization URL button
+                col_auth1, col_auth2 = st.columns([2, 3])
+                with col_auth1:
+                    if st.button("🔐 Login with Upstox", type="primary", use_container_width=True, key="oauth_login_btn"):
+                        st.session_state.oauth_auth_url = auth_url
+                        st.session_state.oauth_helper = oauth_helper
+                        st.info(f"📋 Authorization URL generated! Click the link below or copy it.")
+                
+                # Show authorization URL
+                if 'oauth_auth_url' in st.session_state:
+                    st.markdown(f"""
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; 
+                                padding: 0.75rem; margin: 0.5rem 0;">
+                        <p style="font-size: 0.75rem; color: #64748B; margin: 0 0 0.5rem 0;">
+                            <strong>Authorization URL:</strong>
+                        </p>
+                        <a href="{st.session_state.oauth_auth_url}" target="_blank" 
+                           style="font-size: 0.75rem; color: #2962FF; text-decoration: none; 
+                                  word-break: break-all; display: block;">
+                            {st.session_state.oauth_auth_url}
+                        </a>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    redirect_uri_display = redirect_uri
+                    st.markdown(f"""
+                    <div style="background: #FFF4E6; border-left: 4px solid #FF9800; border-radius: 4px; 
+                                padding: 0.75rem; margin: 1rem 0;">
+                        <p style="font-size: 0.75rem; color: #1E293B; margin: 0;">
+                            <strong>📌 Instructions:</strong><br>
+                            1. Click the authorization URL above (opens in new tab)<br>
+                            2. Login to your Upstox account and authorize the app<br>
+                            3. You'll be redirected to: <code style="background: #E2E8F0; padding: 2px 4px; border-radius: 3px;">{redirect_uri_display}/?code=XXXXX</code><br>
+                            4. Copy the <strong>code</strong> parameter from the URL<br>
+                            5. Paste it in the "Authorization Code" field below
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Code input and token exchange
+                st.markdown("""
+                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; 
+                            padding: 1rem; margin: 1rem 0;">
+                    <p style="font-size: 0.875rem; color: #1E293B; margin: 0 0 0.75rem 0; font-weight: 500;">
+                        Step 2: Enter the authorization code from the callback URL
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                code_input_col1, code_input_col2 = st.columns([3, 1])
+                with code_input_col1:
+                    auth_code = st.text_input(
+                        "Authorization Code",
+                        key="auth_code_input",
+                        placeholder="Paste the code from callback URL (e.g., SJwE0P)",
+                        help="The 'code' parameter from the redirect URL after authorization"
+                    )
+                
+                with code_input_col2:
+                    exchange_token_btn = st.button("🔄 Exchange Token", type="primary", use_container_width=True, key="exchange_token_btn")
+                
+                # Token exchange
+                if exchange_token_btn and auth_code:
+                    if 'oauth_helper' in st.session_state:
+                        with st.spinner("🔄 Exchanging code for access token..."):
+                            success, result = st.session_state.oauth_helper.exchange_code_for_token(auth_code)
+                            
+                            if success:
+                                access_token_new = result.get('access_token')
+                                if access_token_new:
+                                    # Save to session state
+                                    st.session_state.oauth_access_token = access_token_new
+                                    st.session_state.oauth_api_key = oauth_api_key
+                                    
+                                    # Save to environment (current session)
+                                    st.session_state.oauth_helper.save_token_to_env(
+                                        access_token_new, 
+                                        oauth_api_key
+                                    )
+                                    
+                                    st.success("✅ Access token obtained successfully!")
+                                    st.info(f"🔑 Token expires in: {result.get('expires_in', 'N/A')} seconds")
+                                    
+                                    # Show token preview
+                                    token_preview = access_token_new[:50] + "..." if len(access_token_new) > 50 else access_token_new
+                                    st.code(f"Token: {token_preview}", language=None)
+                                    
+                                    # Save options
+                                    save_col1, save_col2 = st.columns(2)
+                                    
+                                    with save_col1:
+                                        if st.button("💾 Save to Local File", key="save_token_file", use_container_width=True):
+                                            file_saved = st.session_state.oauth_helper.save_token_to_file(
+                                                access_token_new,
+                                                oauth_api_key,
+                                                ".env.local"
+                                            )
+                                            if file_saved:
+                                                st.success("✅ Token saved to .env.local file!")
+                                            else:
+                                                st.error("❌ Failed to save token to file")
+                                    
+                                    with save_col2:
+                                        if st.button("🚂 Copy for Railway", key="copy_railway", use_container_width=True):
+                                            railway_vars = f"""UPSTOX_API_KEY={oauth_api_key}
+UPSTOX_ACCESS_TOKEN={access_token_new}"""
+                                            st.code(railway_vars, language=None)
+                                            st.info("📋 Copy the above and paste in Railway → Variables tab")
+                                    
+                                    # Railway deployment instructions
+                                    with st.expander("🚂 Railway Deployment Instructions", expanded=False):
+                                        railway_instructions = f"""
+                                        <div style="background: #F8FAFC; border-radius: 6px; padding: 1rem; margin: 0.5rem 0;">
+                                            <p style="font-size: 0.875rem; color: #1E293B; margin: 0 0 0.75rem 0; font-weight: 500;">
+                                                To deploy this token to Railway:
+                                            </p>
+                                            <ol style="font-size: 0.875rem; color: #64748B; margin: 0; padding-left: 1.5rem;">
+                                                <li>Go to Railway Dashboard → Your Project → Service</li>
+                                                <li>Click on <strong>Variables</strong> tab</li>
+                                                <li>Click <strong>New Variable</strong> and add:</li>
+                                            </ol>
+                                            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 4px; 
+                                                        padding: 0.75rem; margin: 0.75rem 0; font-family: monospace; font-size: 0.75rem;">
+                                                <div>UPSTOX_API_KEY = {oauth_api_key}</div>
+                                                <div>UPSTOX_ACCESS_TOKEN = {access_token_new}</div>
+                                            </div>
+                                            <p style="font-size: 0.75rem; color: #64748B; margin: 0.5rem 0 0 0;">
+                                                <strong>Note:</strong> No quotes needed around values in Railway
+                                            </p>
+                                        </div>
+                                        """
+                                        st.markdown(railway_instructions, unsafe_allow_html=True)
+                                else:
+                                    st.error("❌ No access token in response")
+                            else:
+                                error_msg = result.get('error', 'Unknown error')
+                                st.error(f"❌ Token exchange failed: {error_msg}")
+                                if 'status_code' in result:
+                                    st.info(f"Status Code: {result['status_code']}")
+                    else:
+                        st.warning("⚠️ Please generate authorization URL first")
+        
+        with oauth_tab2:
+            st.markdown("""
+            <div style="background: #F8FAFC; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
+                <p style="font-size: 0.875rem; color: #64748B; margin: 0;">
+                    Enter your credentials manually if you already have them
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                api_key = st.text_input(
+                    "Upstox API Key",
+                    value=os.getenv('UPSTOX_API_KEY', ''),
+                    key="manual_api_key",
+                    help="Your Upstox API Key",
+                    placeholder="Enter your API key"
+                )
+            
+            with col2:
+                access_token = st.text_input(
+                    "Upstox Access Token",
+                    value=os.getenv('UPSTOX_ACCESS_TOKEN', ''),
+                    key="manual_access_token",
+                    type="password",
+                    help="Your Upstox Access Token",
+                    placeholder="Enter your access token"
+                )
+            
+            if st.button("💾 Save Manual Credentials", key="save_manual_creds"):
+                if api_key and access_token:
+                    os.environ['UPSTOX_API_KEY'] = api_key
+                    os.environ['UPSTOX_ACCESS_TOKEN'] = access_token
+                    st.success("✅ Credentials saved to current session!")
+                else:
+                    st.error("❌ Please provide both API Key and Access Token")
+        
+        # Use OAuth token if available, otherwise use manual input
+        if 'oauth_access_token' in st.session_state:
+            access_token = st.session_state.oauth_access_token
+            api_key = st.session_state.oauth_api_key
+        elif 'manual_api_key' in st.session_state and st.session_state.manual_api_key:
+            api_key = st.session_state.manual_api_key
+            access_token = st.session_state.manual_access_token if 'manual_access_token' in st.session_state else os.getenv('UPSTOX_ACCESS_TOKEN', '')
+        else:
+            api_key = os.getenv('UPSTOX_API_KEY', '')
+            access_token = os.getenv('UPSTOX_ACCESS_TOKEN', '')
     
     # Current Configuration Card - Kite Style
     st.markdown("""
@@ -792,7 +1052,9 @@ def main():
             """, unsafe_allow_html=True)
             
             if alerts_df.empty:
-                st.info("ℹ️ No alerts for the selected candle.")
+                # More informative message
+                candle_info = f"candle {selected_candle_dt.strftime('%H:%M')} - {candle_end.strftime('%H:%M')} IST" if selected_candle_dt else "selected candle"
+                st.info(f"⚪ **No Alerts Detected**\n\nNo stocks met the selection criteria for the {candle_info}.\n\nThis could mean:\n- No breakouts/breakdowns occurred in this candle\n- Volume thresholds were not met\n- Swing levels were not breached")
             else:
                 # Sort by volume ratio (highest first) to surface strongest moves
                 if 'vol_ratio' in alerts_df.columns:
