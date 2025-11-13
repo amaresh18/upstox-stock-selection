@@ -959,11 +959,20 @@ class UpstoxStockSelector:
                 # Timestamp is the index
                 current_15m_timestamp = df_15m.index[-1]
             
-            # Convert timestamp to string if it's a datetime
-            if isinstance(current_15m_timestamp, pd.Timestamp):
-                current_15m_timestamp = current_15m_timestamp.strftime('%Y-%m-%d %H:%M:%S %Z')
-            elif hasattr(current_15m_timestamp, 'strftime'):
-                current_15m_timestamp = current_15m_timestamp.strftime('%Y-%m-%d %H:%M:%S %Z')
+            # Keep timestamp as Timestamp object for consistent sorting
+            # Convert to string only if it's not already a Timestamp
+            if not isinstance(current_15m_timestamp, pd.Timestamp):
+                # Try to convert to Timestamp
+                try:
+                    current_15m_timestamp = pd.to_datetime(current_15m_timestamp)
+                except:
+                    # If conversion fails, convert to string format (without timezone)
+                    if isinstance(current_15m_timestamp, pd.Timestamp):
+                        current_15m_timestamp = current_15m_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    elif hasattr(current_15m_timestamp, 'strftime'):
+                        current_15m_timestamp = current_15m_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    else:
+                        current_15m_timestamp = str(current_15m_timestamp)
             
             if pd.isna(current_15m_volume) or current_15m_volume == 0:
                 return alerts
@@ -974,7 +983,7 @@ class UpstoxStockSelector:
                 
                 alerts.append({
                     'symbol': symbol,
-                    'timestamp': str(current_15m_timestamp),
+                    'timestamp': current_15m_timestamp,  # Keep as Timestamp for sorting
                     'signal_type': 'VOLUME_SPIKE_15M',
                     'price': float(current_15m_price),
                     'current_15m_volume': float(current_15m_volume),
@@ -1182,7 +1191,19 @@ class UpstoxStockSelector:
         # Create DataFrames
         if all_alerts:
             alerts_df = pd.DataFrame(all_alerts)
-            alerts_df = alerts_df.sort_values('timestamp').reset_index(drop=True)
+            
+            # Convert all timestamps to datetime for consistent sorting
+            # Handle mixed types: some may be strings, some may be Timestamp objects
+            if 'timestamp' in alerts_df.columns:
+                alerts_df['timestamp'] = pd.to_datetime(alerts_df['timestamp'], errors='coerce')
+                # Remove any rows with invalid timestamps
+                alerts_df = alerts_df.dropna(subset=['timestamp'])
+            
+            # Sort by timestamp
+            if not alerts_df.empty and 'timestamp' in alerts_df.columns:
+                alerts_df = alerts_df.sort_values('timestamp').reset_index(drop=True)
+                # Convert back to string format without timezone (already in IST)
+                alerts_df['timestamp'] = alerts_df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
         else:
             alerts_df = pd.DataFrame()
         

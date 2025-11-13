@@ -152,6 +152,18 @@ body {
     background: var(--kite-bg-secondary);
 }
 
+/* Better spacing between sections */
+.main .block-container > div {
+    margin-bottom: var(--kite-space-4);
+}
+
+/* Improve readability of all text */
+.main .block-container p,
+.main .block-container div,
+.main .block-container span {
+    color: var(--kite-text-primary);
+}
+
 /* ========== TYPOGRAPHY ========== */
 h1, h2, h3, h4, h5, h6 {
     font-weight: var(--kite-font-semibold);
@@ -352,30 +364,38 @@ p {
 
 /* Secondary Button - Zerodha Kite Style */
 .stButton:not([kind="primary"]) > button {
-    background: #F3F4F6;
-    color: #233045;
-    border: 1px solid #E2E8F0;
+    background: #F3F4F6 !important;
+    color: #233045 !important;
+    border: 1px solid #E2E8F0 !important;
     box-shadow: none;
 }
 
 .stButton:not([kind="primary"]) > button:hover {
-    background: #E5E7EB;
-    color: #2062F6;
-    border-color: #2062F6;
+    background: #E5E7EB !important;
+    color: #2062F6 !important;
+    border-color: #2062F6 !important;
 }
 
 .stButton:not([kind="primary"]) > button:active {
-    background: #F0F4F8;
-    color: #1E4ED8;
-    border-color: #1E4ED8;
+    background: #D1D5DB !important;
+    color: #1E4ED8 !important;
+    border-color: #1E4ED8 !important;
 }
 
 .stButton:not([kind="primary"]) > button:disabled {
-    background: #FFFFFF;
-    color: #CBD5E1;
-    border-color: #E2E8F0;
+    background: #F3F4F6 !important;
+    color: #9CA3AF !important;
+    border-color: #E2E8F0 !important;
     cursor: not-allowed;
     opacity: 0.6;
+}
+
+/* Ensure button text is always readable */
+.stButton > button,
+.stButton > button p,
+.stButton > button span,
+.stButton > button div {
+    color: inherit !important;
 }
 
 /* Download Button */
@@ -424,12 +444,12 @@ p {
 .stTextInput > div > div > input,
 .stNumberInput > div > div > input,
 .stSelectbox > div > div > select {
-    background: var(--kite-bg-primary);
-    border: 1px solid var(--kite-border);
+    background: var(--kite-bg-primary) !important;
+    border: 1px solid var(--kite-border) !important;
     border-radius: var(--kite-radius-md);
     padding: var(--kite-space-3) var(--kite-space-4);
     font-size: var(--kite-text-sm);
-    color: var(--kite-text-primary);
+    color: var(--kite-text-primary) !important;
     transition: all var(--kite-transition-base);
     font-family: inherit;
 }
@@ -437,14 +457,57 @@ p {
 .stTextInput > div > div > input:focus,
 .stNumberInput > div > div > input:focus,
 .stSelectbox > div > div > select:focus {
-    border-color: var(--kite-primary);
-    box-shadow: 0 0 0 3px rgba(32, 98, 246, 0.1);
+    border-color: var(--kite-primary) !important;
+    box-shadow: 0 0 0 3px rgba(32, 98, 246, 0.1) !important;
     outline: none;
+    color: var(--kite-text-primary) !important;
 }
 
 .stTextInput > div > div > input::placeholder,
 .stNumberInput > div > div > input::placeholder {
-    color: var(--kite-text-tertiary);
+    color: var(--kite-text-tertiary) !important;
+    opacity: 0.7;
+}
+
+/* Selectbox dropdown text color */
+.stSelectbox > div > div > select {
+    color: var(--kite-text-primary) !important;
+}
+
+.stSelectbox > div > div > select option {
+    color: var(--kite-text-primary) !important;
+    background: var(--kite-bg-primary) !important;
+}
+
+/* ========== CHECKBOX ========== */
+.stCheckbox > label {
+    font-size: var(--kite-text-sm);
+    color: var(--kite-text-primary) !important;
+    cursor: pointer;
+    font-weight: var(--kite-font-normal);
+}
+
+.stCheckbox > label > div[data-baseweb="checkbox"] {
+    border-radius: var(--kite-radius-sm);
+}
+
+/* Date Input */
+.stDateInput > div > div > input {
+    background: var(--kite-bg-primary) !important;
+    border: 1px solid var(--kite-border) !important;
+    border-radius: var(--kite-radius-md);
+    padding: var(--kite-space-3) var(--kite-space-4);
+    font-size: var(--kite-text-sm);
+    color: var(--kite-text-primary) !important;
+    transition: all var(--kite-transition-base);
+    font-family: inherit;
+}
+
+.stDateInput > div > div > input:focus {
+    border-color: var(--kite-primary) !important;
+    box-shadow: 0 0 0 3px rgba(32, 98, 246, 0.1) !important;
+    outline: none;
+    color: var(--kite-text-primary) !important;
 }
 
 /* ========== TABLES ========== */
@@ -685,12 +748,32 @@ p {
     transition: all var(--kite-transition-base);
     font-weight: var(--kite-font-medium);
     font-size: var(--kite-text-sm);
+    color: var(--kite-text-primary) !important;
+    background: transparent;
+    padding: var(--kite-space-2) var(--kite-space-4);
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    background: var(--kite-bg-hover);
+    color: var(--kite-text-primary) !important;
 }
 
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
-    background: var(--kite-primary);
-    color: var(--kite-text-inverse);
+    background: var(--kite-primary) !important;
+    color: #FFFFFF !important;
     box-shadow: var(--kite-shadow-xs);
+}
+
+.stTabs [data-baseweb="tab"][aria-selected="false"] {
+    color: var(--kite-text-primary) !important;
+    background: transparent !important;
+}
+
+/* Ensure tab text is always readable */
+.stTabs [data-baseweb="tab"] p,
+.stTabs [data-baseweb="tab"] span,
+.stTabs [data-baseweb="tab"] div {
+    color: inherit !important;
 }
 
 /* ========== EXPANDER ========== */
@@ -700,6 +783,11 @@ p {
     background: var(--kite-bg-primary);
     box-shadow: var(--kite-shadow-xs);
     transition: all var(--kite-transition-base);
+}
+
+.stExpander > label {
+    color: var(--kite-text-primary) !important;
+    font-weight: var(--kite-font-medium);
 }
 
 .stExpander:hover {
@@ -832,6 +920,96 @@ select:focus-visible {
     font-size: var(--kite-text-sm);
     color: var(--kite-text-secondary);
     margin-top: var(--kite-space-2);
+}
+
+/* ========== LABELS & HELP TEXT ========== */
+/* Streamlit labels */
+label {
+    color: var(--kite-text-primary) !important;
+    font-weight: var(--kite-font-medium);
+    font-size: var(--kite-text-sm);
+}
+
+/* Help text (tooltips) */
+[data-testid="stTooltipIcon"] {
+    color: var(--kite-text-tertiary) !important;
+}
+
+[data-testid="stTooltipIcon"]:hover {
+    color: var(--kite-primary) !important;
+}
+
+/* Caption text */
+.stCaption {
+    color: var(--kite-text-secondary) !important;
+    font-size: var(--kite-text-xs);
+}
+
+/* Metric labels */
+[data-testid="stMetricLabel"] {
+    color: var(--kite-text-secondary) !important;
+    font-size: var(--kite-text-xs);
+    font-weight: var(--kite-font-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+[data-testid="stMetricValue"] {
+    color: var(--kite-text-primary) !important;
+    font-weight: var(--kite-font-semibold);
+}
+
+/* Code blocks */
+.stCodeBlock {
+    background: var(--kite-bg-secondary) !important;
+    border: 1px solid var(--kite-border) !important;
+    border-radius: var(--kite-radius-md);
+    color: var(--kite-text-primary) !important;
+}
+
+code {
+    background: var(--kite-bg-secondary) !important;
+    color: var(--kite-text-primary) !important;
+    padding: 2px 6px;
+    border-radius: var(--kite-radius-sm);
+    font-size: 0.875em;
+}
+
+/* Info boxes */
+.stAlert {
+    border-radius: var(--kite-radius-md);
+    border-left-width: 3px;
+}
+
+/* Sidebar improvements */
+[data-testid="stSidebar"] {
+    background: var(--kite-bg-primary) !important;
+    border-right: 1px solid var(--kite-border) !important;
+}
+
+[data-testid="stSidebar"] label {
+    color: var(--kite-text-primary) !important;
+}
+
+[data-testid="stSidebar"] .stSelectbox label,
+[data-testid="stSidebar"] .stTextInput label,
+[data-testid="stSidebar"] .stNumberInput label,
+[data-testid="stSidebar"] .stDateInput label {
+    color: var(--kite-text-primary) !important;
+    font-weight: var(--kite-font-medium);
+}
+
+/* Better spacing in sidebar */
+[data-testid="stSidebar"] > div {
+    padding: var(--kite-space-4);
+}
+
+[data-testid="stSidebar"] .stSelectbox,
+[data-testid="stSidebar"] .stTextInput,
+[data-testid="stSidebar"] .stNumberInput,
+[data-testid="stSidebar"] .stDateInput,
+[data-testid="stSidebar"] .stCheckbox {
+    margin-bottom: var(--kite-space-3);
 }
 
 /* ========== RESPONSIVE ========== */

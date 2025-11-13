@@ -58,25 +58,21 @@ def render_card(
         "glass": "kite-card-glass"
     }.get(variant, "")
     
+    # Build header HTML
     header_html = ""
     if title or subtitle:
-        header_html = f"""
-        <div class="kite-card-header">
-            <div>
-                {f'<div class="kite-card-title">{title}</div>' if title else ''}
-                {f'<div class="kite-card-subtitle">{subtitle}</div>' if subtitle else ''}
-            </div>
-        </div>
-        """
+        title_html = f'<div class="kite-card-title">{title}</div>' if title else ''
+        subtitle_html = f'<div class="kite-card-subtitle">{subtitle}</div>' if subtitle else ''
+        header_html = f'<div class="kite-card-header"><div>{title_html}{subtitle_html}</div></div>'
     
+    # Build body HTML
     body_html = f'<div class="kite-card-body">{content or ""}</div>' if content else ""
     
-    st.markdown(f"""
-    <div class="kite-card {variant_class} {class_name}">
-        {header_html}
-        {body_html}
-    </div>
-    """, unsafe_allow_html=True)
+    # Combine all HTML into a single line to avoid rendering issues
+    card_html = f'<div class="kite-card {variant_class} {class_name}">{header_html}{body_html}</div>'
+    
+    # Render using markdown with unsafe_allow_html
+    st.markdown(card_html, unsafe_allow_html=True)
 
 
 def render_alert_card(
