@@ -903,12 +903,13 @@ class UpstoxStockSelector:
                 return alerts
             
             # Fetch 15-minute candle data for today
-            df_15m = await self._fetch_historical_data(
-                instrument_key, 
-                symbol, 
-                days=1,  # Only need today's data for 15-min candles
+            # We don't need historical 15-min data, just today's candles
+            # So we'll fetch directly from Upstox API for today only
+            df_15m = await self._fetch_today_data_from_upstox_api(
+                instrument_key,
+                symbol,
                 target_date=target_date,
-                interval="15m"  # Use 15-minute interval
+                interval="15m"
             )
             
             if df_15m is None or len(df_15m) == 0:
@@ -917,11 +918,12 @@ class UpstoxStockSelector:
                 return alerts
             
             # Fetch 1-hour candle data for past 70 candles (need enough history)
-            # 70 candles * 1 hour = 70 hours = ~3 days of trading data
+            # 70 candles * 1 hour = 70 hours = ~12-15 days of trading data
+            # (Market hours: 9:15 AM - 3:30 PM = ~6.25 hours per day)
             df_1h = await self._fetch_historical_data(
                 instrument_key,
                 symbol,
-                days=5,  # Fetch 5 days to ensure we have at least 70 1-hour candles
+                days=15,  # Fetch 15 days to ensure we have at least 70 1-hour candles
                 target_date=target_date,
                 interval="1h"  # Use 1-hour interval
             )

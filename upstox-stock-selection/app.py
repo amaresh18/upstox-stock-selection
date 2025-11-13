@@ -79,7 +79,7 @@ def inject_custom_css():
         body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #F5F7FA; font-size: 14px; }
         .main .block-container { padding: 1.5rem; max-width: 1400px; background: #F5F7FA; }
         h1 { font-size: 1.875rem; font-weight: 600; color: #1E293B; letter-spacing: -0.01em; }
-        .stButton > button { background: #2962FF; border-radius: 6px; font-weight: 500; padding: 0.75rem 1.25rem; font-size: 0.875rem; }
+        .stButton > button { background: #2062F6; border-radius: 6px; font-weight: 500; padding: 0.75rem 1.25rem; font-size: 0.875rem; }
         .stButton > button:hover { background: #1E4ED8; }
         [data-testid="stSidebar"] { background: #FFFFFF; border-right: 1px solid #E2E8F0; }
         """
@@ -469,9 +469,13 @@ def main():
             )
             st.session_state.params['max_workers'] = max_workers
         
-        # Action Buttons - iOS Style
+        # Configuration Actions - Better Organization
         st.markdown("""
-        <div style="margin-top: 2rem; margin-bottom: 1rem;">
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #E2E8F0;">
+            <p style="font-size: 0.75rem; font-weight: 500; color: #64748B; 
+                      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+                Configuration Actions
+            </p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -480,12 +484,14 @@ def main():
         with col1:
             if st.button("🔄 Load Defaults", use_container_width=True, key="load_defaults_btn"):
                 load_default_values()
+                show_toast("Default values loaded!", "success")
                 st.rerun()
         
         with col2:
             if st.button("💾 Save Config", use_container_width=True):
                 # Params are already synced from widgets above, just confirm
-                show_toast("Configuration saved! All parameters are ready to use.", "success")
+                st.session_state.saved_config = st.session_state.params.copy()
+                show_toast("Configuration saved!", "success")
     
     # Premium main content area
     render_section_header(
@@ -600,7 +606,7 @@ def main():
                             <strong>Authorization URL:</strong>
                         </p>
                         <a href="{st.session_state.oauth_auth_url}" target="_blank" 
-                           style="font-size: 0.75rem; color: #2962FF; text-decoration: none; 
+                           style="font-size: 0.75rem; color: #2062F6; text-decoration: none; 
                                   word-break: break-all; display: block;">
                             {st.session_state.oauth_auth_url}
                         </a>
@@ -755,7 +761,13 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                     placeholder="Enter your access token"
                 )
             
-            if st.button("💾 Save Manual Credentials", key="save_manual_creds"):
+            # Better organized save button
+            st.markdown("""
+            <div style="margin-top: 1rem;">
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("💾 Save Manual Credentials", type="primary", key="save_manual_creds"):
                 if api_key and access_token:
                     os.environ['UPSTOX_API_KEY'] = api_key
                     os.environ['UPSTOX_ACCESS_TOKEN'] = access_token
@@ -804,12 +816,16 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
             config_df = config_df.astype(str)
             st.dataframe(config_df, use_container_width=True, hide_index=True)
     
-    # Action Buttons - Kite Style
+    # Action Buttons - Kite Style (Better Organization)
     st.markdown("""
-    <div style="margin: 1.5rem 0;">
+    <div style="margin: 2rem 0 1.5rem 0; padding-top: 1.5rem; border-top: 1px solid #E2E8F0;">
+        <p style="font-size: 0.875rem; font-weight: 600; color: #1E293B; margin-bottom: 1rem;">
+            Analysis Actions
+        </p>
     </div>
     """, unsafe_allow_html=True)
     
+    # Primary action button row
     col1, col2, col3 = st.columns([2, 2, 4])
     
     with col1:
