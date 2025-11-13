@@ -1046,14 +1046,34 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
 
                 # Render premium alert cards using component
                 for idx, r in alerts_df.iterrows():
-                    render_alert_card(
-                        symbol=r.get('symbol', 'N/A'),
-                        signal_type=r.get('signal_type', 'N/A'),
-                        price=r.get('price', None),
-                        vol_ratio=r.get('vol_ratio', None),
-                        swing_level=r.get('swing_high', None) if r.get('signal_type') == 'BREAKOUT' else r.get('swing_low', None),
-                        timestamp=r.get('timestamp', '')
-                    )
+                    signal_type = r.get('signal_type', 'N/A')
+                    
+                    # Handle different alert types
+                    if signal_type == 'VOLUME_SPIKE_15M':
+                        # 15-minute volume spike alert
+                        render_alert_card(
+                            symbol=r.get('symbol', 'N/A'),
+                            signal_type='VOLUME_SPIKE_15M',
+                            price=r.get('price', None),
+                            vol_ratio=r.get('vol_ratio', None),
+                            swing_level=None,  # Not applicable for volume spikes
+                            timestamp=r.get('timestamp', ''),
+                            additional_info={
+                                '15m Volume': f"{r.get('current_15m_volume', 0):.0f}",
+                                'Avg 1h Volume': f"{r.get('avg_1h_volume', 0):.0f}",
+                                'Alert Type': '15-Min Volume Spike'
+                            }
+                        )
+                    else:
+                        # Regular breakout/breakdown alert
+                        render_alert_card(
+                            symbol=r.get('symbol', 'N/A'),
+                            signal_type=signal_type,
+                            price=r.get('price', None),
+                            vol_ratio=r.get('vol_ratio', None),
+                            swing_level=r.get('swing_high', None) if signal_type == 'BREAKOUT' else r.get('swing_low', None),
+                            timestamp=r.get('timestamp', '')
+                        )
 
                 # Download button - iOS Style
                 csv = alerts_df.to_csv(index=False)

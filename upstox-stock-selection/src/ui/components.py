@@ -93,23 +93,35 @@ def render_alert_card(
     
     Args:
         symbol: Stock symbol
-        signal_type: "BREAKOUT" or "BREAKDOWN"
+        signal_type: "BREAKOUT", "BREAKDOWN", or "VOLUME_SPIKE_15M"
         price: Current price
         vol_ratio: Volume ratio
-        swing_level: Swing high/low level
+        swing_level: Swing high/low level (not applicable for volume spikes)
         timestamp: Alert timestamp
         additional_info: Additional key-value pairs to display
     """
-    is_breakout = signal_type.upper() == "BREAKOUT"
-    border_color = "#00C853" if is_breakout else "#F44336"
-    badge_bg = "rgba(0, 200, 83, 0.1)" if is_breakout else "rgba(244, 67, 54, 0.1)"
-    badge_text = "#00C853" if is_breakout else "#F44336"
-    alert_class = "kite-alert-success" if is_breakout else "kite-alert-danger"
-    signal_badge = "BREAKOUT" if is_breakout else "BREAKDOWN"
+    signal_type_upper = signal_type.upper()
     
-    level_text = ""
-    if swing_level:
-        level_text = f"Above ₹{swing_level:.2f}" if is_breakout else f"Below ₹{swing_level:.2f}"
+    # Handle different alert types
+    if signal_type_upper == "VOLUME_SPIKE_15M":
+        is_breakout = True  # Use green for volume spikes
+        border_color = "#2196F3"  # Blue for volume spikes
+        badge_bg = "rgba(33, 150, 243, 0.1)"
+        badge_text = "#2196F3"
+        alert_class = "kite-alert-primary"
+        signal_badge = "VOLUME SPIKE 15M"
+        level_text = "15-minute volume spike detected"
+    else:
+        is_breakout = signal_type_upper == "BREAKOUT"
+        border_color = "#00C853" if is_breakout else "#F44336"
+        badge_bg = "rgba(0, 200, 83, 0.1)" if is_breakout else "rgba(244, 67, 54, 0.1)"
+        badge_text = "#00C853" if is_breakout else "#F44336"
+        alert_class = "kite-alert-success" if is_breakout else "kite-alert-danger"
+        signal_badge = "BREAKOUT" if is_breakout else "BREAKDOWN"
+        
+        level_text = ""
+        if swing_level:
+            level_text = f"Above ₹{swing_level:.2f}" if is_breakout else f"Below ₹{swing_level:.2f}"
     
     details = []
     if price is not None:
@@ -129,7 +141,7 @@ def render_alert_card(
             <div style="font-weight: 600; font-size: 1rem; color: #1E293B; letter-spacing: -0.01em;">
                 {symbol}
             </div>
-            <span class="kite-badge {'kite-badge-success' if is_breakout else 'kite-badge-danger'}" style="background: {badge_bg}; color: {badge_text}; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">
+            <span class="kite-badge {'kite-badge-primary' if signal_type_upper == 'VOLUME_SPIKE_15M' else ('kite-badge-success' if is_breakout else 'kite-badge-danger')}" style="background: {badge_bg}; color: {badge_text}; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">
                 {signal_badge}
             </span>
         </div>

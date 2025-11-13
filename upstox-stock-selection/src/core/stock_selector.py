@@ -259,11 +259,12 @@ class UpstoxStockSelector:
         instrument_key: str, 
         symbol: str,
         days: int = None,
-        target_date: date = None
+        target_date: date = None,
+        interval: str = None
     ) -> Optional[pd.DataFrame]:
         """
-        Fetch 1-hour OHLCV historical data using hybrid approach:
-        - Historical data (30 days) from Yahoo Finance (from batch download cache)
+        Fetch OHLCV historical data using hybrid approach:
+        - Historical data from Yahoo Finance (from batch download cache) - only for 1h interval
         - Current day data from Upstox API (or specific date if target_date provided)
         
         Args:
@@ -271,12 +272,17 @@ class UpstoxStockSelector:
             symbol: Trading symbol (for reference)
             days: Number of days of historical data to fetch
             target_date: Specific date to analyze. If None, uses current date.
+            interval: Interval string like "15m", "1h", etc. If None, uses DEFAULT_INTERVAL from settings.
             
         Returns:
             DataFrame with OHLCV data or None if fetch fails
         """
         if days is None:
             days = DEFAULT_HISTORICAL_DAYS
+        
+        # Use provided interval or default from settings
+        if interval is None:
+            interval = settings.DEFAULT_INTERVAL
         
         if self.verbose:
             print(f"  Fetching historical data for {symbol} with {days} days of history")
@@ -290,24 +296,27 @@ class UpstoxStockSelector:
                 end_date = datetime.now(self.ist)
             
             # Step 1: Get historical data from Yahoo Finance (from batch download cache)
-            # Note: The batch download should have used the same 'days' parameter
+            # Note: Only use Yahoo Finance cache for 1h interval (default)
+            # For other intervals (15m, etc.), fetch directly from Upstox
             hist_df = pd.DataFrame()
-            if symbol in self.yf_historical_data:
-                hist_df = self.yf_historical_data[symbol].copy()
-                if self.verbose:
-                    print(f"  Using cached Yahoo Finance data for {symbol}: {len(hist_df)} bars (requested {days} days)")
-            else:
-                if self.verbose:
-                    print(f"  Warning: No Yahoo Finance data found for {symbol} in cache")
+            if interval == "1h" or interval is None:
+                if symbol in self.yf_historical_data:
+                    hist_df = self.yf_historical_data[symbol].copy()
+                    if self.verbose:
+                        print(f"  Using cached Yahoo Finance data for {symbol}: {len(hist_df)} bars (requested {days} days)")
+                else:
+                    if self.verbose:
+                        print(f"  Warning: No Yahoo Finance data found for {symbol} in cache")
             
-            # Step 2: Fetch historical data from Upstox API (if Yahoo Finance failed or not available)
+            # Step 2: Fetch historical data from Upstox API
+            # Always fetch from Upstox for non-1h intervals, or if Yahoo Finance cache is empty
             if hist_df.empty and self.access_token and self.access_token != 'dummy':
                 if self.verbose:
-                    print(f"  Fetching historical data from Upstox API for {symbol} (last {days} days)...")
+                    print(f"  Fetching historical data from Upstox API for {symbol} (last {days} days, interval: {interval})...")
                 try:
                     start_date = end_date - timedelta(days=days)
                     hist_upstox = await self._fetch_historical_data_from_upstox_api(
-                        instrument_key, symbol, start_date, end_date
+                        instrument_key, symbol, start_date, end_date, interval=interval
                     )
                     if hist_upstox is not None and not hist_upstox.empty:
                         # Exclude today's data (will fetch separately)
@@ -326,11 +335,11 @@ class UpstoxStockSelector:
             if self.access_token and self.access_token != 'dummy':
                 if self.verbose:
                     if target_date:
-                        print(f"Fetching data for {target_date.strftime('%Y-%m-%d')} from Upstox for {symbol}...")
+                        print(f"Fetching data for {target_date.strftime('%Y-%m-%d')} from Upstox for {symbol} (interval: {interval})...")
                     else:
-                        print(f"Fetching current day data from Upstox for {symbol}...")
+                        print(f"Fetching current day data from Upstox for {symbol} (interval: {interval})...")
                 try:
-                    today_df = await self._fetch_today_data_from_upstox_api(instrument_key, symbol, target_date=target_date)
+                    today_df = await self._fetch_today_data_from_upstox_api(instrument_key, symbol, target_date=target_date, interval=interval)
                     if today_df is not None and not today_df.empty:
                         if self.verbose:
                             if target_date:
@@ -437,7 +446,8 @@ class UpstoxStockSelector:
         instrument_key: str,
         symbol: str,
         start_date: datetime,
-        end_date: datetime
+        end_date: datetime,
+        interval: str = None
     ) -> Optional[pd.DataFrame]:
         """
         Fetch historical data from Upstox API v3 for a specific period.
@@ -468,11 +478,12 @@ class UpstoxStockSelector:
             # Use Upstox API v3 endpoint with configured interval
             # Format: /historical-candle/{instrument_key}/{unit}/{interval}/{to_date}/{from_date}
             # Note: to_date comes before from_date in the path
-            # Read interval fresh from settings
-            current_interval = settings.DEFAULT_INTERVAL
-            unit, interval_value = self._interval_to_upstox_format(current_interval)
+            # Use provided interval or default from settings
+            if interval is None:
+                interval = settings.DEFAULT_INTERVAL
+            unit, interval_value = self._interval_to_upstox_format(interval)
             if self.verbose:
-                print(f"  Fetching historical data for {symbol} with interval: {current_interval} ({unit}/{interval_value})")
+                print(f"  Fetching historical data for {symbol} with interval: {interval} ({unit}/{interval_value})")
             url = f"{UPSTOX_BASE_URL}/historical-candle/{encoded_instrument_key}/{unit}/{interval_value}/{end_str}/{start_str}"
             params = {}
             
@@ -546,7 +557,8 @@ class UpstoxStockSelector:
         self,
         instrument_key: str,
         symbol: str,
-        target_date: date = None
+        target_date: date = None,
+        interval: str = None
     ) -> Optional[pd.DataFrame]:
         """
         Fetch today's data from Upstox API v3 using Intraday Candle Data API.
@@ -575,9 +587,10 @@ class UpstoxStockSelector:
             
             encoded_instrument_key = urllib.parse.quote(instrument_key, safe='')
             
-            # Get interval from settings (read fresh each time)
-            current_interval = settings.DEFAULT_INTERVAL
-            unit, interval_value = self._interval_to_upstox_format(current_interval)
+            # Use provided interval or default from settings
+            if interval is None:
+                interval = settings.DEFAULT_INTERVAL
+            unit, interval_value = self._interval_to_upstox_format(interval)
             
             # Check if target_date is today
             today = datetime.now(self.ist).date()
@@ -596,9 +609,9 @@ class UpstoxStockSelector:
                 # This API automatically returns current trading day data
                 if self.verbose:
                     if target_date:
-                        print(f"  Fetching intraday data for {symbol} (today: {target_date.strftime('%Y-%m-%d')}) with interval: {current_interval} ({unit}/{interval_value})")
+                        print(f"  Fetching intraday data for {symbol} (today: {target_date.strftime('%Y-%m-%d')}) with interval: {interval} ({unit}/{interval_value})")
                     else:
-                        print(f"  Fetching intraday data for {symbol} with interval: {current_interval} ({unit}/{interval_value})")
+                        print(f"  Fetching intraday data for {symbol} with interval: {interval} ({unit}/{interval_value})")
                 url = f"{UPSTOX_BASE_URL}/historical-candle/intraday/{encoded_instrument_key}/{unit}/{interval_value}"
             
             params = {}
@@ -864,6 +877,120 @@ class UpstoxStockSelector:
         
         return alerts
     
+    async def _detect_15min_volume_alerts(self, symbol: str, target_date: date = None) -> List[Dict]:
+        """
+        Detect 15-minute volume spike alerts by comparing with past 70 1-hour candles average.
+        
+        This is an additional alert system to catch stocks quickly within 15 minutes.
+        Compares current 15-minute candle volume with average volume of past 70 1-hour candles.
+        Triggers alert if 15-min volume >= average of past 70 1-hour candles.
+        
+        Args:
+            symbol: NSE trading symbol
+            target_date: Specific date to analyze. If None, uses current date.
+            
+        Returns:
+            List of volume spike alert dictionaries
+        """
+        alerts = []
+        
+        try:
+            # Get instrument key
+            instrument_key = self._get_instrument_key(symbol)
+            if not instrument_key:
+                if self.verbose:
+                    print(f"  Instrument key not found for {symbol} (15min volume alert)")
+                return alerts
+            
+            # Fetch 15-minute candle data for today
+            df_15m = await self._fetch_historical_data(
+                instrument_key, 
+                symbol, 
+                days=1,  # Only need today's data for 15-min candles
+                target_date=target_date,
+                interval="15m"  # Use 15-minute interval
+            )
+            
+            if df_15m is None or len(df_15m) == 0:
+                if self.verbose:
+                    print(f"  No 15-minute data available for {symbol}")
+                return alerts
+            
+            # Fetch 1-hour candle data for past 70 candles (need enough history)
+            # 70 candles * 1 hour = 70 hours = ~3 days of trading data
+            df_1h = await self._fetch_historical_data(
+                instrument_key,
+                symbol,
+                days=5,  # Fetch 5 days to ensure we have at least 70 1-hour candles
+                target_date=target_date,
+                interval="1h"  # Use 1-hour interval
+            )
+            
+            if df_1h is None or len(df_1h) < 70:
+                if self.verbose:
+                    print(f"  Insufficient 1-hour data for {symbol}: {len(df_1h) if df_1h is not None else 0} candles (need at least 70)")
+                return alerts
+            
+            # Calculate average volume of past 70 1-hour candles
+            # Use the last 70 candles (excluding the most recent one to compare with current 15-min)
+            past_70_1h_volumes = df_1h['volume'].tail(70).values
+            avg_1h_volume = np.mean(past_70_1h_volumes)
+            
+            if pd.isna(avg_1h_volume) or avg_1h_volume == 0:
+                if self.verbose:
+                    print(f"  Invalid average 1-hour volume for {symbol}")
+                return alerts
+            
+            # Check the most recent 15-minute candle
+            # Get the last completed 15-minute candle
+            if len(df_15m) == 0:
+                return alerts
+            
+            latest_15m_candle = df_15m.iloc[-1]
+            current_15m_volume = latest_15m_candle['volume']
+            current_15m_price = latest_15m_candle['close']
+            
+            # Get timestamp - check if it's in index or column
+            if 'timestamp' in df_15m.columns:
+                current_15m_timestamp = latest_15m_candle['timestamp']
+            else:
+                # Timestamp is the index
+                current_15m_timestamp = df_15m.index[-1]
+            
+            # Convert timestamp to string if it's a datetime
+            if isinstance(current_15m_timestamp, pd.Timestamp):
+                current_15m_timestamp = current_15m_timestamp.strftime('%Y-%m-%d %H:%M:%S %Z')
+            elif hasattr(current_15m_timestamp, 'strftime'):
+                current_15m_timestamp = current_15m_timestamp.strftime('%Y-%m-%d %H:%M:%S %Z')
+            
+            if pd.isna(current_15m_volume) or current_15m_volume == 0:
+                return alerts
+            
+            # Check if current 15-minute volume >= average of past 70 1-hour candles
+            if current_15m_volume >= avg_1h_volume:
+                volume_ratio = current_15m_volume / avg_1h_volume
+                
+                alerts.append({
+                    'symbol': symbol,
+                    'timestamp': str(current_15m_timestamp),
+                    'signal_type': 'VOLUME_SPIKE_15M',
+                    'price': float(current_15m_price),
+                    'current_15m_volume': float(current_15m_volume),
+                    'avg_1h_volume': float(avg_1h_volume),
+                    'vol_ratio': float(volume_ratio),
+                    'alert_source': '15min_volume_comparison'
+                })
+                
+                if self.verbose:
+                    print(f"  ✓ 15-min volume alert for {symbol}: {current_15m_volume:.0f} >= {avg_1h_volume:.0f} (ratio: {volume_ratio:.2f}x)")
+        
+        except Exception as e:
+            if self.verbose:
+                print(f"  Error detecting 15-min volume alerts for {symbol}: {e}")
+                print(f"  Traceback: {traceback.format_exc()}")
+        
+        return alerts
+    
     def _calculate_statistics(self, alerts: List[Dict], symbol: str) -> Dict:
         """
         Calculate aggregate statistics for a symbol.
@@ -949,13 +1076,19 @@ class UpstoxStockSelector:
             # Calculate indicators
             df = self._calculate_indicators(df)
             
-            # Detect signals
+            # Detect signals (existing breakout/breakdown alerts)
             alerts = self._detect_signals(df, symbol)
             
-            # Calculate statistics
+            # Detect 15-minute volume spike alerts (additional alert system)
+            volume_alerts = await self._detect_15min_volume_alerts(symbol, target_date=target_date)
+            
+            # Combine both alert types
+            all_alerts = alerts + volume_alerts
+            
+            # Calculate statistics (only for breakout/breakdown alerts, not volume spikes)
             stats = self._calculate_statistics(alerts, symbol)
             
-            return alerts, stats
+            return all_alerts, stats
             
         except Exception as e:
             print(f"Error analyzing {symbol}: {e}")
