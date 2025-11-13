@@ -298,9 +298,10 @@ p {
 }
 
 /* ========== BUTTONS ========== */
+/* Primary Button - Zerodha Kite Style */
 .stButton > button {
-    background: var(--kite-primary);
-    color: var(--kite-text-inverse);
+    background: #2962FF;
+    color: #FFFFFF;
     border: none;
     border-radius: var(--kite-radius-md);
     padding: var(--kite-space-3) var(--kite-space-5);
@@ -308,69 +309,115 @@ p {
     font-size: var(--kite-text-sm);
     transition: all var(--kite-transition-base);
     cursor: pointer;
-    letter-spacing: var(--kite-tracking-normal);
+    letter-spacing: 0.01em;
     box-shadow: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.stButton > button::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
+    line-height: 1.5;
 }
 
 .stButton > button:hover {
-    background: var(--kite-primary-dark);
-    box-shadow: var(--kite-shadow-sm);
-    transform: translateY(-1px);
-}
-
-.stButton > button:hover::before {
-    width: 300px;
-    height: 300px;
+    background: #1E4ED8;
+    color: #FFFFFF;
+    box-shadow: 0 2px 4px rgba(41, 98, 255, 0.2);
 }
 
 .stButton > button:active {
-    transform: translateY(0);
-    box-shadow: var(--kite-shadow-xs);
+    background: #1E4ED8;
+    color: #FFFFFF;
+    transform: scale(0.98);
+}
+
+.stButton > button:focus {
+    outline: 2px solid #2962FF;
+    outline-offset: 2px;
 }
 
 .stButton > button:disabled {
-    opacity: 0.5;
+    background: #CBD5E1;
+    color: #94A3B8;
     cursor: not-allowed;
+    opacity: 0.6;
     transform: none !important;
 }
 
-/* Secondary Button */
+/* Primary Button Type (explicit) */
+.stButton[kind="primary"] > button {
+    background: #2962FF;
+    color: #FFFFFF;
+}
+
+.stButton[kind="primary"] > button:hover {
+    background: #1E4ED8;
+    color: #FFFFFF;
+}
+
+/* Secondary Button - Zerodha Kite Style */
+.stButton:not([kind="primary"]) > button {
+    background: #FFFFFF;
+    color: #1E293B;
+    border: 1px solid #E2E8F0;
+    box-shadow: none;
+}
+
+.stButton:not([kind="primary"]) > button:hover {
+    background: #F8F9FA;
+    color: #2962FF;
+    border-color: #2962FF;
+}
+
+.stButton:not([kind="primary"]) > button:active {
+    background: #F0F4F8;
+    color: #1E4ED8;
+    border-color: #1E4ED8;
+}
+
+.stButton:not([kind="primary"]) > button:disabled {
+    background: #FFFFFF;
+    color: #CBD5E1;
+    border-color: #E2E8F0;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Download Button */
+.stDownloadButton > button {
+    background: #2962FF;
+    color: #FFFFFF;
+    border: none;
+    border-radius: var(--kite-radius-md);
+    padding: var(--kite-space-3) var(--kite-space-5);
+    font-weight: var(--kite-font-medium);
+    font-size: var(--kite-text-sm);
+    transition: all var(--kite-transition-base);
+    cursor: pointer;
+}
+
+.stDownloadButton > button:hover {
+    background: #1E4ED8;
+    color: #FFFFFF;
+}
+
+/* Utility Button Classes */
 .kite-btn-secondary {
-    background: var(--kite-bg-primary);
-    color: var(--kite-text-primary);
-    border: 1px solid var(--kite-border);
+    background: #FFFFFF;
+    color: #1E293B;
+    border: 1px solid #E2E8F0;
 }
 
 .kite-btn-secondary:hover {
-    background: var(--kite-bg-hover);
-    border-color: var(--kite-primary);
-    color: var(--kite-primary);
+    background: #F8F9FA;
+    border-color: #2962FF;
+    color: #2962FF;
 }
 
-/* Ghost Button */
 .kite-btn-ghost {
     background: transparent;
-    color: var(--kite-text-primary);
+    color: #1E293B;
     border: 1px solid transparent;
 }
 
 .kite-btn-ghost:hover {
-    background: var(--kite-bg-hover);
+    background: #F8F9FA;
+    color: #2962FF;
 }
 
 /* ========== INPUTS ========== */

@@ -653,9 +653,9 @@ def main():
                             if success:
                                 access_token_new = result.get('access_token')
                                 if access_token_new:
-                                    # Save to session state
+                                    # Save to session state (use different key to avoid widget conflict)
                                     st.session_state.oauth_access_token = access_token_new
-                                    st.session_state.oauth_api_key = oauth_api_key
+                                    st.session_state.saved_oauth_api_key = oauth_api_key
                                     
                                     # Save to environment (current session)
                                     st.session_state.oauth_helper.save_token_to_env(
@@ -766,7 +766,7 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
         # Use OAuth token if available, otherwise use manual input
         if 'oauth_access_token' in st.session_state:
             access_token = st.session_state.oauth_access_token
-            api_key = st.session_state.oauth_api_key
+            api_key = st.session_state.get('saved_oauth_api_key', '')
         elif 'manual_api_key' in st.session_state and st.session_state.manual_api_key:
             api_key = st.session_state.manual_api_key
             access_token = st.session_state.manual_access_token if 'manual_access_token' in st.session_state else os.getenv('UPSTOX_ACCESS_TOKEN', '')
