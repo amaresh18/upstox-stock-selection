@@ -717,6 +717,68 @@ class UpstoxStockSelector:
         # Match reference: no min_periods (uses all available data)
         df['AvgRange'] = df['Range'].rolling(window=lookback_swing).mean()
         
+        # Price Momentum: Percentage change from previous close
+        # Positive = price increasing, Negative = price decreasing
+        df['PriceMomentum'] = df['close'].pct_change() * 100.0  # Convert to percentage
+        
+        # Average Price Momentum over past 7 days (ADDITIONAL FEATURE - Optional)
+        # Calculate window size based on interval to get exactly 7 trading days
+        # Market hours: 9:15 AM to 3:30 PM = 6.25 hours = 375 minutes per trading day
+        try:
+            current_interval = settings.DEFAULT_INTERVAL
+            
+            # Calculate candles per day for the current interval
+            # Market hours: 9:15 AM to 3:30 PM = 375 minutes = 6.25 hours
+            if current_interval.endswith('m'):
+                minutes = int(current_interval[:-1])
+                if minutes > 0:
+                    candles_per_day = int(375 / minutes)  # 375 minutes per trading day
+                else:
+                    candles_per_day = 7  # Default fallback
+            elif current_interval.endswith('h'):
+                hours = int(current_interval[:-1])
+                # For hourly candles, we have 7 candles: 9:15, 10:15, 11:15, 12:15, 13:15, 14:15, 15:15
+                if hours == 1:
+                    candles_per_day = 7  # Special case: 1h candles = 7 per day
+                elif hours > 0:
+                    candles_per_day = max(1, int(6.25 / hours))
+                else:
+                    candles_per_day = 7  # Default fallback
+            elif current_interval.endswith('d'):
+                candles_per_day = 1
+            else:
+                # Default to 1h if unknown
+                candles_per_day = 7
+            
+            # Calculate window for 7 trading days
+            momentum_window = max(1, candles_per_day * 7)  # Ensure at least 1
+            
+            if self.verbose:
+                print(f"  Calculating 7-day average momentum: {momentum_window} candles ({current_interval} interval, {candles_per_day} candles/day)")
+            
+            # Calculate average momentum (only if we have enough data)
+            # If insufficient data, fill with NaN (will be handled in alert creation)
+            if len(df) >= momentum_window:
+                df['AvgPriceMomentum7d'] = df['PriceMomentum'].rolling(window=momentum_window).mean()
+            else:
+                # Insufficient data - fill with NaN
+                df['AvgPriceMomentum7d'] = np.nan
+                if self.verbose:
+                    print(f"  Warning: Insufficient data for 7-day momentum average ({len(df)} bars, need {momentum_window})")
+            
+            # Momentum Ratio: Current momentum vs average momentum
+            # Higher ratio = stronger momentum compared to average
+            # Handle division by zero and NaN cases
+            df['MomentumRatio'] = df['PriceMomentum'] / df['AvgPriceMomentum7d'].replace(0, np.nan)
+            # Replace inf values with NaN
+            df['MomentumRatio'] = df['MomentumRatio'].replace([np.inf, -np.inf], np.nan)
+        except Exception as e:
+            # If momentum calculation fails, set to NaN (won't break existing logic)
+            if self.verbose:
+                print(f"  Warning: Error calculating momentum indicators: {e}")
+            df['AvgPriceMomentum7d'] = np.nan
+            df['MomentumRatio'] = np.nan
+        
         return df
     
     def _detect_signals(self, df: pd.DataFrame, symbol: str, require_exit_price: bool = False) -> List[Dict]:
@@ -775,6 +837,10 @@ class UpstoxStockSelector:
             avg_range = df['AvgRange'].iloc[i]
             curr_open = df['open'].iloc[i]
             timestamp = df['timestamp'].iloc[i]
+            # Get momentum values (handle NaN gracefully - these are optional fields)
+            price_momentum = df['PriceMomentum'].iloc[i] if 'PriceMomentum' in df.columns else 0.0
+            avg_momentum_7d = df['AvgPriceMomentum7d'].iloc[i] if 'AvgPriceMomentum7d' in df.columns else 0.0
+            momentum_ratio = df['MomentumRatio'].iloc[i] if 'MomentumRatio' in df.columns else 0.0
             
             # Skip if we don't have valid indicator values
             if (pd.isna(swing_high_prev) or pd.isna(swing_low_prev) or 
@@ -824,6 +890,9 @@ class UpstoxStockSelector:
                     'swing_high': swing_high_prev,
                     'swing_low': swing_low_prev,
                     'vol_ratio': vol_ratio,
+                    'price_momentum': price_momentum if not pd.isna(price_momentum) else 0.0,
+                    'avg_momentum_7d': avg_momentum_7d if not pd.isna(avg_momentum_7d) else 0.0,
+                    'momentum_ratio': momentum_ratio if not pd.isna(momentum_ratio) else 0.0,
                     'range': range_val,
                     'avg_range': avg_range,
                     'entry_price': entry_price,
@@ -867,6 +936,9 @@ class UpstoxStockSelector:
                     'swing_high': swing_high_prev,
                     'swing_low': swing_low_prev,
                     'vol_ratio': vol_ratio,
+                    'price_momentum': price_momentum if not pd.isna(price_momentum) else 0.0,
+                    'avg_momentum_7d': avg_momentum_7d if not pd.isna(avg_momentum_7d) else 0.0,
+                    'momentum_ratio': momentum_ratio if not pd.isna(momentum_ratio) else 0.0,
                     'range': range_val,
                     'avg_range': avg_range,
                     'entry_price': entry_price,
@@ -952,6 +1024,13 @@ class UpstoxStockSelector:
             current_15m_volume = latest_15m_candle['volume']
             current_15m_price = latest_15m_candle['close']
             
+            # Calculate price momentum for 15-minute candle (percentage change from previous)
+            if len(df_15m) > 1:
+                prev_15m_price = df_15m.iloc[-2]['close']
+                price_momentum_15m = ((current_15m_price - prev_15m_price) / prev_15m_price) * 100.0
+            else:
+                price_momentum_15m = 0.0
+            
             # Get timestamp - check if it's in index or column
             if 'timestamp' in df_15m.columns:
                 current_15m_timestamp = latest_15m_candle['timestamp']
@@ -989,6 +1068,7 @@ class UpstoxStockSelector:
                     'current_15m_volume': float(current_15m_volume),
                     'avg_1h_volume': float(avg_1h_volume),
                     'vol_ratio': float(volume_ratio),
+                    'price_momentum': float(price_momentum_15m),
                     'alert_source': '15min_volume_comparison'
                 })
                 

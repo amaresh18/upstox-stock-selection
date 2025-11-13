@@ -82,6 +82,7 @@ def render_alert_card(
     vol_ratio: Optional[float] = None,
     swing_level: Optional[float] = None,
     timestamp: Optional[str] = None,
+    price_momentum: Optional[float] = None,
     additional_info: Optional[Dict[str, Any]] = None
 ):
     """
@@ -124,12 +125,34 @@ def render_alert_card(
         details.append(f'<span style="color: #64748B; font-size: 0.875rem;">Price:</span> <span style="color: #1E293B; font-weight: 500; font-size: 0.875rem;">₹{price:.2f}</span>')
     if vol_ratio is not None:
         details.append(f'<span style="color: #64748B; font-size: 0.875rem;">Volume:</span> <span style="color: #1E293B; font-weight: 500; font-size: 0.875rem;">{vol_ratio:.2f}×</span>')
+    if price_momentum is not None:
+        momentum_color = "#00C853" if price_momentum > 0 else "#F44336" if price_momentum < 0 else "#64748B"
+        momentum_sign = "+" if price_momentum > 0 else ""
+        details.append(f'<span style="color: #64748B; font-size: 0.875rem;">Momentum:</span> <span style="color: {momentum_color}; font-weight: 500; font-size: 0.875rem;">{momentum_sign}{price_momentum:.2f}%</span>')
+    
     if timestamp:
         details.append(f'<span style="color: #64748B; font-size: 0.875rem;">Time:</span> <span style="color: #1E293B; font-weight: 500; font-size: 0.875rem;">{timestamp}</span>')
     
+    # Add average momentum and momentum ratio if available in additional_info
     if additional_info:
+        # Handle momentum comparison fields first (special formatting)
+        if 'Avg Momentum (7d)' in additional_info:
+            avg_mom = additional_info['Avg Momentum (7d)']
+            details.append(f'<span style="color: #64748B; font-size: 0.875rem;">Avg (7d):</span> <span style="color: #1E293B; font-weight: 500; font-size: 0.875rem;">{avg_mom}</span>')
+        if 'Momentum Ratio' in additional_info:
+            mom_ratio = additional_info['Momentum Ratio']
+            try:
+                ratio_value = float(mom_ratio.replace('×', ''))
+                ratio_color = "#00C853" if ratio_value > 1.0 else "#F44336" if ratio_value < 1.0 else "#64748B"
+            except:
+                ratio_color = "#64748B"
+            details.append(f'<span style="color: #64748B; font-size: 0.875rem;">vs Avg:</span> <span style="color: {ratio_color}; font-weight: 500; font-size: 0.875rem;">{mom_ratio}</span>')
+        
+        # Add other additional info fields (excluding momentum fields already handled)
+        excluded_keys = {'Avg Momentum (7d)', 'Momentum Ratio'}
         for key, value in additional_info.items():
-            details.append(f'<span style="color: #64748B; font-size: 0.875rem;">{key}:</span> <span style="color: #1E293B; font-weight: 500; font-size: 0.875rem;">{value}</span>')
+            if key not in excluded_keys:
+                details.append(f'<span style="color: #64748B; font-size: 0.875rem;">{key}:</span> <span style="color: #1E293B; font-weight: 500; font-size: 0.875rem;">{value}</span>')
     
     st.markdown(f"""
     <div class="kite-alert {alert_class} kite-fade-in">

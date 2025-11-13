@@ -21,6 +21,7 @@ from src.config.settings import (
     VOL_WINDOW,
     VOL_MULT,
     HOLD_BARS,
+    PRICE_MOMENTUM_THRESHOLD,
     DEFAULT_HISTORICAL_DAYS,
     DEFAULT_INTERVAL,
     DEFAULT_MAX_WORKERS,
@@ -109,6 +110,7 @@ DEFAULT_VALUES = {
     'vol_window': VOL_WINDOW,
     'vol_mult': VOL_MULT,
     'hold_bars': HOLD_BARS,
+    'price_momentum_threshold': 0.0,  # Optional: Minimum price momentum percentage filter (0.0 = disabled, use original strategy)
     'historical_days': DEFAULT_HISTORICAL_DAYS,
     'max_workers': DEFAULT_MAX_WORKERS,
 }
@@ -427,6 +429,21 @@ def main():
                 help="Volume spike threshold (e.g., 1.6 = 1.6x average volume)"
             )
             st.session_state.params['vol_mult'] = vol_mult
+            
+            # Price Momentum Threshold (Optional Filter)
+            price_momentum_default = float(st.session_state.params.get('price_momentum_threshold', DEFAULT_VALUES['price_momentum_threshold']))
+            price_momentum = st.number_input(
+                "Price Momentum Threshold (%) - Optional",
+                min_value=0.0,
+                max_value=50.0,
+                value=price_momentum_default,
+                step=0.1,
+                key="price_momentum_input",
+                help="Optional: Minimum price change percentage to filter alerts (e.g., 0.5 = 0.5% increase or decrease). Set to 0 to disable filtering and use original strategy."
+            )
+            st.session_state.params['price_momentum_threshold'] = price_momentum
+            if price_momentum == 0.0:
+                st.caption("ℹ️ Price momentum filter is disabled. Using original strategy without momentum filtering.")
             
             # Hold Bars
             hold_bars_default = int(st.session_state.params.get('hold_bars', DEFAULT_VALUES['hold_bars']))
@@ -1039,6 +1056,17 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
             st.caption(f"Showing alerts for candle {candle_start.strftime('%H:%M')} - {candle_end.strftime('%H:%M')} IST ({date_str})")
             alerts_df = filtered_alerts
         
+        # Apply price momentum filter if threshold is set (> 0)
+        price_momentum_threshold = st.session_state.params.get('price_momentum_threshold', 0.0)
+        if price_momentum_threshold > 0 and not alerts_df.empty and 'price_momentum' in alerts_df.columns:
+            # Filter alerts where absolute price momentum >= threshold
+            # This catches both increasing (positive) and decreasing (negative) momentum
+            before_count = len(alerts_df)
+            alerts_df = alerts_df[alerts_df['price_momentum'].abs() >= price_momentum_threshold].copy()
+            after_count = len(alerts_df)
+            if before_count != after_count:
+                st.info(f"📊 Price momentum filter applied: {before_count - after_count} alert(s) filtered out (threshold: ±{price_momentum_threshold}%)")
+        
         # If user wants only the recent closed candle (intraday decision view),
         # show premium Kite-style alerts
         if not include_historical and only_recent_candle:
@@ -1074,6 +1102,7 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                             vol_ratio=r.get('vol_ratio', None),
                             swing_level=None,  # Not applicable for volume spikes
                             timestamp=r.get('timestamp', ''),
+                            price_momentum=r.get('price_momentum', None),
                             additional_info={
                                 '15m Volume': f"{r.get('current_15m_volume', 0):.0f}",
                                 'Avg 1h Volume': f"{r.get('avg_1h_volume', 0):.0f}",
@@ -1082,13 +1111,30 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                         )
                     else:
                         # Regular breakout/breakdown alert
+                        # Prepare additional info for momentum comparison (optional fields)
+                        additional_info = {}
+                        try:
+                            if 'avg_momentum_7d' in r and r.get('avg_momentum_7d') is not None:
+                                avg_mom = r.get('avg_momentum_7d', 0.0)
+                                if not pd.isna(avg_mom):
+                                    additional_info['Avg Momentum (7d)'] = f"{avg_mom:+.2f}%"
+                            if 'momentum_ratio' in r and r.get('momentum_ratio') is not None:
+                                mom_ratio = r.get('momentum_ratio', 0.0)
+                                if not pd.isna(mom_ratio) and mom_ratio != 0:
+                                    additional_info['Momentum Ratio'] = f"{mom_ratio:.2f}×"
+                        except (KeyError, TypeError, ValueError):
+                            # Gracefully handle missing momentum fields (backward compatibility)
+                            pass
+                        
                         render_alert_card(
                             symbol=r.get('symbol', 'N/A'),
                             signal_type=signal_type,
                             price=r.get('price', None),
                             vol_ratio=r.get('vol_ratio', None),
                             swing_level=r.get('swing_high', None) if signal_type == 'BREAKOUT' else r.get('swing_low', None),
-                            timestamp=r.get('timestamp', '')
+                            timestamp=r.get('timestamp', ''),
+                            price_momentum=r.get('price_momentum', None),
+                            additional_info=additional_info if additional_info else None
                         )
 
                 # Download button - iOS Style

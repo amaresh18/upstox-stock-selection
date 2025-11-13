@@ -11,6 +11,7 @@ LOOKBACK_SWING = 12  # Bars for swing high/low calculation
 VOL_WINDOW = 70  # Bars for volume average (10 days * 7 bars/day)
 VOL_MULT = 1.6  # Volume multiplier threshold
 HOLD_BARS = 3  # Bars to hold position for P&L calculation
+PRICE_MOMENTUM_THRESHOLD = 0.0  # Optional: Minimum price momentum percentage filter (0.0 = disabled, use original strategy)
 
 # Data Configuration
 DEFAULT_HISTORICAL_DAYS = 30  # Default days of historical data
