@@ -1,0 +1,2 @@
+"""Adapters layer - external integrations."""
+

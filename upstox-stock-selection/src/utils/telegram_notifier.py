@@ -7,6 +7,7 @@ This module provides functions to send Telegram notifications when stock alerts 
 import os
 import asyncio
 import aiohttp
+import pandas as pd
 from typing import Dict, List, Optional
 from datetime import datetime
 
@@ -34,17 +35,14 @@ class TelegramNotifier:
         Format a single alert as a Telegram message.
         
         Args:
-            alert: Alert dictionary with symbol, signal_type, price, etc.
+            alert: Alert dictionary with symbol, signal_type/pattern_type, price, etc.
             
         Returns:
             Formatted message string
         """
         symbol = alert.get('symbol', 'N/A')
-        signal_type = alert.get('signal_type', 'N/A')
+        signal_type = alert.get('signal_type', alert.get('pattern_type', 'N/A'))
         price = alert.get('price', 0)
-        vol_ratio = alert.get('vol_ratio', 0)
-        swing_high = alert.get('swing_high', 0)
-        swing_low = alert.get('swing_low', 0)
         timestamp = alert.get('timestamp', 'N/A')
         
         # Format timestamp
@@ -53,9 +51,24 @@ class TelegramNotifier:
                 ts = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
                 timestamp_str = ts.strftime('%Y-%m-%d %H:%M:%S')
             except:
-                timestamp_str = str(timestamp)
+                try:
+                    # Try parsing as datetime string
+                    ts = pd.to_datetime(timestamp)
+                    timestamp_str = ts.strftime('%Y-%m-%d %H:%M:%S')
+                except:
+                    timestamp_str = str(timestamp)
         else:
             timestamp_str = str(timestamp)
+        
+        # Handle pattern-based alerts
+        if signal_type in ['RSI_BULLISH_DIVERGENCE', 'RSI_BEARISH_DIVERGENCE', 
+                          'UPTREND_RETEST', 'DOWNTREND_RETEST']:
+            return self._format_pattern_alert(alert, signal_type, symbol, price, timestamp_str)
+        
+        # Handle traditional breakout/breakdown alerts
+        vol_ratio = alert.get('vol_ratio', 0)
+        swing_high = alert.get('swing_high', 0)
+        swing_low = alert.get('swing_low', 0)
         
         # Determine level and direction
         if signal_type == 'BREAKOUT':
@@ -63,11 +76,26 @@ class TelegramNotifier:
             level = swing_high
             direction = "ABOVE"
             signal_text = "BREAKOUT"
-        else:
+        elif signal_type == 'BREAKDOWN':
             emoji = "🔴"
             level = swing_low
             direction = "BELOW"
             signal_text = "BREAKDOWN"
+        elif signal_type == 'VOLUME_SPIKE_15M':
+            emoji = "📊"
+            signal_text = "VOLUME SPIKE (15M)"
+            message = f"{emoji} *{signal_text}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Price: ₹{price:.2f}\n"
+            message += f"📈 Volume: {vol_ratio:.2f}x average\n"
+            return message
+        else:
+            emoji = "📊"
+            signal_text = signal_type
+            message = f"{emoji} *{signal_text}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Price: ₹{price:.2f}\n"
+            return message
         
         # Format message
         message = f"{emoji} *{signal_text}* - {symbol}\n\n"
@@ -75,6 +103,208 @@ class TelegramNotifier:
         message += f"💰 Price: ₹{price:.2f}\n"
         message += f"📊 Level: ₹{level:.2f} ({direction})\n"
         message += f"📈 Volume: {vol_ratio:.2f}x average\n"
+        
+        return message
+    
+    def _format_pattern_alert(self, alert: Dict, pattern_type: str, symbol: str, price: float, timestamp_str: str) -> str:
+        """
+        Format pattern-based alert message.
+        
+        Args:
+            alert: Alert dictionary
+            pattern_type: Type of pattern detected
+            symbol: Trading symbol
+            price: Current price
+            timestamp_str: Formatted timestamp string
+            
+        Returns:
+            Formatted message string
+        """
+        if pattern_type == 'RSI_BULLISH_DIVERGENCE':
+            emoji = "📈"
+            pattern_name = "RSI Bullish Divergence"
+            rsi = alert.get('rsi', 0)
+            rsi_change = alert.get('rsi_change', 0)
+            price_change_pct = alert.get('price_change_pct', 0)
+            
+            message = f"{emoji} *{pattern_name}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Price: ₹{price:.2f}\n"
+            message += f"📊 RSI: {rsi:.2f}\n"
+            message += f"📉 Price Change: {price_change_pct:.2f}%\n"
+            message += f"📈 RSI Change: +{rsi_change:.2f}\n"
+            message += f"\n💡 *Signal:* Potential reversal upward\n"
+            message += f"🎯 *Entry:* Consider long position\n"
+            message += f"🛑 *Stop Loss:* Below recent low\n"
+            
+        elif pattern_type == 'RSI_BEARISH_DIVERGENCE':
+            emoji = "📉"
+            pattern_name = "RSI Bearish Divergence"
+            rsi = alert.get('rsi', 0)
+            rsi_change = alert.get('rsi_change', 0)
+            price_change_pct = alert.get('price_change_pct', 0)
+            
+            message = f"{emoji} *{pattern_name}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Price: ₹{price:.2f}\n"
+            message += f"📊 RSI: {rsi:.2f}\n"
+            message += f"📈 Price Change: +{price_change_pct:.2f}%\n"
+            message += f"📉 RSI Change: {rsi_change:.2f}\n"
+            message += f"\n💡 *Signal:* Potential reversal downward\n"
+            message += f"🎯 *Entry:* Consider short position\n"
+            message += f"🛑 *Stop Loss:* Above recent high\n"
+            
+        elif pattern_type == 'UPTREND_RETEST':
+            emoji = "🟢"
+            pattern_name = "Uptrend Retest (Break & Retest)"
+            retest_level = alert.get('retest_level', 0)
+            entry_price = alert.get('entry_price', price)
+            stop_loss = alert.get('stop_loss', 0)
+            target_price = alert.get('target_price', 0)
+            vol_ratio = alert.get('vol_ratio', 0)
+            bars_after = alert.get('bars_after_breakout', 0)
+            
+            message = f"{emoji} *{pattern_name}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Current Price: ₹{price:.2f}\n"
+            message += f"📊 Retest Level: ₹{retest_level:.2f}\n"
+            message += f"📈 Volume: {vol_ratio:.2f}x average\n"
+            message += f"⏱️ Bars after breakout: {bars_after}\n"
+            message += f"\n💡 *Signal:* Bullish retest confirmed\n"
+            message += f"🎯 *Entry:* ₹{entry_price:.2f}\n"
+            message += f"🛑 *Stop Loss:* ₹{stop_loss:.2f}\n"
+            if target_price > 0:
+                message += f"🎯 *Target:* ₹{target_price:.2f}\n"
+            
+        elif pattern_type == 'INVERSE_HEAD_SHOULDERS':
+            emoji = "📈"
+            pattern_name = "Inverse Head & Shoulders"
+            neckline = alert.get('neckline', 0)
+            head_price = alert.get('head_price', 0)
+            entry_price = alert.get('entry_price', price)
+            stop_loss = alert.get('stop_loss', 0)
+            target_price = alert.get('target_price', 0)
+            vol_ratio = alert.get('vol_ratio', 0)
+            
+            message = f"{emoji} *{pattern_name}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Current Price: ₹{price:.2f}\n"
+            message += f"📊 Neckline: ₹{neckline:.2f}\n"
+            message += f"📉 Head: ₹{head_price:.2f}\n"
+            message += f"📈 Volume: {vol_ratio:.2f}x average\n"
+            message += f"\n💡 *Signal:* Bullish reversal confirmed\n"
+            message += f"🎯 *Entry:* ₹{entry_price:.2f}\n"
+            message += f"🛑 *Stop Loss:* ₹{stop_loss:.2f}\n"
+            if target_price > 0:
+                message += f"🎯 *Target:* ₹{target_price:.2f}\n"
+        
+        elif pattern_type == 'DOUBLE_BOTTOM':
+            emoji = "📈"
+            pattern_name = "Double Bottom"
+            neckline = alert.get('neckline', 0)
+            entry_price = alert.get('entry_price', price)
+            stop_loss = alert.get('stop_loss', 0)
+            target_price = alert.get('target_price', 0)
+            vol_ratio = alert.get('vol_ratio', 0)
+            
+            message = f"{emoji} *{pattern_name}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Current Price: ₹{price:.2f}\n"
+            message += f"📊 Neckline: ₹{neckline:.2f}\n"
+            message += f"📈 Volume: {vol_ratio:.2f}x average\n"
+            message += f"\n💡 *Signal:* Bullish reversal confirmed\n"
+            message += f"🎯 *Entry:* ₹{entry_price:.2f}\n"
+            message += f"🛑 *Stop Loss:* ₹{stop_loss:.2f}\n"
+            if target_price > 0:
+                message += f"🎯 *Target:* ₹{target_price:.2f}\n"
+        
+        elif pattern_type == 'DOUBLE_TOP':
+            emoji = "📉"
+            pattern_name = "Double Top"
+            neckline = alert.get('neckline', 0)
+            entry_price = alert.get('entry_price', price)
+            stop_loss = alert.get('stop_loss', 0)
+            target_price = alert.get('target_price', 0)
+            vol_ratio = alert.get('vol_ratio', 0)
+            
+            message = f"{emoji} *{pattern_name}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Current Price: ₹{price:.2f}\n"
+            message += f"📊 Neckline: ₹{neckline:.2f}\n"
+            message += f"📈 Volume: {vol_ratio:.2f}x average\n"
+            message += f"\n💡 *Signal:* Bearish reversal confirmed\n"
+            message += f"🎯 *Entry:* ₹{entry_price:.2f}\n"
+            message += f"🛑 *Stop Loss:* ₹{stop_loss:.2f}\n"
+            if target_price > 0:
+                message += f"🎯 *Target:* ₹{target_price:.2f}\n"
+        
+        elif pattern_type == 'TRIPLE_BOTTOM':
+            emoji = "📈"
+            pattern_name = "Triple Bottom"
+            neckline = alert.get('neckline', 0)
+            entry_price = alert.get('entry_price', price)
+            stop_loss = alert.get('stop_loss', 0)
+            target_price = alert.get('target_price', 0)
+            vol_ratio = alert.get('vol_ratio', 0)
+            
+            message = f"{emoji} *{pattern_name}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Current Price: ₹{price:.2f}\n"
+            message += f"📊 Neckline: ₹{neckline:.2f}\n"
+            message += f"📈 Volume: {vol_ratio:.2f}x average\n"
+            message += f"\n💡 *Signal:* Strong bullish reversal confirmed\n"
+            message += f"🎯 *Entry:* ₹{entry_price:.2f}\n"
+            message += f"🛑 *Stop Loss:* ₹{stop_loss:.2f}\n"
+            if target_price > 0:
+                message += f"🎯 *Target:* ₹{target_price:.2f}\n"
+        
+        elif pattern_type == 'TRIPLE_TOP':
+            emoji = "📉"
+            pattern_name = "Triple Top"
+            neckline = alert.get('neckline', 0)
+            entry_price = alert.get('entry_price', price)
+            stop_loss = alert.get('stop_loss', 0)
+            target_price = alert.get('target_price', 0)
+            vol_ratio = alert.get('vol_ratio', 0)
+            
+            message = f"{emoji} *{pattern_name}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Current Price: ₹{price:.2f}\n"
+            message += f"📊 Neckline: ₹{neckline:.2f}\n"
+            message += f"📈 Volume: {vol_ratio:.2f}x average\n"
+            message += f"\n💡 *Signal:* Strong bearish reversal confirmed\n"
+            message += f"🎯 *Entry:* ₹{entry_price:.2f}\n"
+            message += f"🛑 *Stop Loss:* ₹{stop_loss:.2f}\n"
+            if target_price > 0:
+                message += f"🎯 *Target:* ₹{target_price:.2f}\n"
+        
+        elif pattern_type == 'DOWNTREND_RETEST':
+            emoji = "🔴"
+            pattern_name = "Downtrend Retest (Break & Retest)"
+            retest_level = alert.get('retest_level', 0)
+            entry_price = alert.get('entry_price', price)
+            stop_loss = alert.get('stop_loss', 0)
+            target_price = alert.get('target_price', 0)
+            vol_ratio = alert.get('vol_ratio', 0)
+            bars_after = alert.get('bars_after_breakdown', 0)
+            
+            message = f"{emoji} *{pattern_name}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Current Price: ₹{price:.2f}\n"
+            message += f"📊 Retest Level: ₹{retest_level:.2f}\n"
+            message += f"📈 Volume: {vol_ratio:.2f}x average\n"
+            message += f"⏱️ Bars after breakdown: {bars_after}\n"
+            message += f"\n💡 *Signal:* Bearish retest confirmed\n"
+            message += f"🎯 *Entry:* ₹{entry_price:.2f}\n"
+            message += f"🛑 *Stop Loss:* ₹{stop_loss:.2f}\n"
+            if target_price > 0:
+                message += f"🎯 *Target:* ₹{target_price:.2f}\n"
+            
+        else:
+            # Fallback for unknown patterns
+            message = f"📊 *{pattern_type}* - {symbol}\n\n"
+            message += f"⏰ Time: `{timestamp_str}`\n"
+            message += f"💰 Price: ₹{price:.2f}\n"
         
         return message
     

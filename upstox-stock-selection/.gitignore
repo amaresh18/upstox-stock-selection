@@ -24,7 +24,6 @@ wheels/
 venv/
 env/
 ENV/
-.venv
 
 # IDE
 .vscode/
@@ -33,17 +32,17 @@ ENV/
 *.swo
 *~
 
-# Data files
-# Note: data/NSE.json is now committed for Railway deployment
-# data/NSE.json
-data/*.csv
-*.csv
-*.db
-*.sqlite
-
 # Environment variables
 .env
 .env.local
+
+# Data files (generated)
+data/NSE.json
+data/nifty100_symbols.json
+*.csv
+*.xlsx
+output/
+UpstocksNiftyMapping.csv.xlsx
 
 # Logs
 *.log
@@ -52,10 +51,12 @@ data/*.csv
 .DS_Store
 Thumbs.db
 
-# Project specific
-stock_selection_*.csv
-upstox_data.db
+# Test files
+test_*.py
+*_test.py
 
-# Upstox token files
+# Temporary files
+*.tmp
+*.bak
+pythonworkingcode.txt
 UpstoxTokenGen.txt
-UpstoxTokenGen.*

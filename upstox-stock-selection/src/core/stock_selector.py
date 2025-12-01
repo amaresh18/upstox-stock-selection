@@ -27,6 +27,7 @@ from ..config.settings import (
     TIMEZONE,
     DEFAULT_NSE_JSON_PATH,
 )
+from .pattern_detector import PatternDetector
 
 
 class UpstoxStockSelector:
@@ -52,6 +53,8 @@ class UpstoxStockSelector:
         self.yf_historical_data = {}  # Cache for Yahoo Finance batch downloaded data
         # Control logging verbosity (reduce for Railway to avoid rate limits)
         self.verbose = verbose if verbose is not None else os.getenv('VERBOSE_LOGGING', 'false').lower() == 'true'
+        # Initialize pattern detector
+        self.pattern_detector = PatternDetector(rsi_period=14, verbose=self.verbose)
     
     def _interval_to_upstox_format(self, interval: str) -> Tuple[str, int]:
         """
@@ -148,7 +151,7 @@ class UpstoxStockSelector:
     def _batch_download_yahoo_finance(self, symbols: List[str], days: int = None) -> Dict[str, pd.DataFrame]:
         """
         Batch download historical data from Yahoo Finance for all symbols.
-        Uses yf.download() for efficient batch downloading.
+        Uses yf.download() for efficient batch downloading with chunking to avoid rate limits.
         
         Args:
             symbols: List of NSE symbols (without .NS suffix)
@@ -168,91 +171,124 @@ class UpstoxStockSelector:
         # Convert symbols to Yahoo Finance format (SYMBOL.NS)
         yf_symbols = [f"{symbol}.NS" for symbol in symbols]
         
-        try:
-            # Batch download using yf.download() - more efficient than individual downloads
-            raw = yf.download(
-                tickers=" ".join(yf_symbols),
-                interval=yf_interval,
-                period=f"{days}d",
-                group_by="ticker",
-                auto_adjust=False,
-                threads=True,
-                progress=False,
-            )
+        # Split into smaller batches to avoid rate limiting (max 20 symbols per batch)
+        batch_size = 20
+        historical_data = {}
+        total_batches = (len(yf_symbols) + batch_size - 1) // batch_size
+        
+        for batch_idx in range(0, len(yf_symbols), batch_size):
+            batch_symbols = yf_symbols[batch_idx:batch_idx + batch_size]
+            batch_num = (batch_idx // batch_size) + 1
             
-            # Process each symbol's data
-            historical_data = {}
+            print(f"  Downloading batch {batch_num}/{total_batches} ({len(batch_symbols)} symbols)...")
             
-            for symbol in symbols:
-                yf_symbol = f"{symbol}.NS"
-                try:
-                    df = raw[yf_symbol].dropna().copy()
-                    
-                    # Flatten unexpected multiindex
-                    if isinstance(df.columns, pd.MultiIndex):
-                        df.columns = df.columns.get_level_values(0)
-                    
-                    # Ensure numeric
-                    for c in ["Open", "High", "Low", "Close", "Volume"]:
-                        if c in df.columns:
-                            df[c] = pd.to_numeric(df[c], errors="coerce")
-                    
-                    df = df.dropna(subset=["Open", "High", "Low", "Close", "Volume"])
-                    
-                    if df.empty:
-                        continue
-                    
-                    # Convert to IST timezone
+            try:
+                # Batch download using yf.download() - more efficient than individual downloads
+                raw = yf.download(
+                    tickers=" ".join(batch_symbols),
+                    interval=yf_interval,
+                    period=f"{days}d",
+                    group_by="ticker",
+                    auto_adjust=False,
+                    threads=True,
+                    progress=False,
+                )
+                
+                # Process each symbol's data in this batch
+                batch_symbols_list = symbols[batch_idx:batch_idx + batch_size]
+                for symbol in batch_symbols_list:
+                    yf_symbol = f"{symbol}.NS"
                     try:
-                        if df.index.tz is None:
-                            df.index = df.index.tz_localize("UTC").tz_convert(self.ist)
-                        else:
-                            df.index = df.index.tz_convert(self.ist)
-                    except Exception:
-                        pass
+                        # Check if we got data for this symbol
+                        if isinstance(raw.columns, pd.MultiIndex):
+                            if yf_symbol not in raw.columns.levels[0]:
+                                if self.verbose:
+                                    print(f"    ⚠️  No data for {symbol}")
+                                continue
+                        elif yf_symbol not in raw:
+                            if self.verbose:
+                                print(f"    ⚠️  No data for {symbol}")
+                            continue
+                        
+                        df = raw[yf_symbol].dropna().copy()
+                        
+                        # Flatten unexpected multiindex
+                        if isinstance(df.columns, pd.MultiIndex):
+                            df.columns = df.columns.get_level_values(0)
+                        
+                        # Ensure numeric
+                        for c in ["Open", "High", "Low", "Close", "Volume"]:
+                            if c in df.columns:
+                                df[c] = pd.to_numeric(df[c], errors="coerce")
+                        
+                        df = df.dropna(subset=["Open", "High", "Low", "Close", "Volume"])
+                        
+                        if df.empty:
+                            continue
+                        
+                        # Convert to IST timezone
+                        try:
+                            if df.index.tz is None:
+                                df.index = df.index.tz_localize("UTC").tz_convert(self.ist)
+                            else:
+                                df.index = df.index.tz_convert(self.ist)
+                        except Exception:
+                            pass
+                        
+                        # Rename columns to lowercase
+                        df.columns = [col.lower() for col in df.columns]
+                        
+                        # Select only OHLCV columns
+                        available_cols = ['open', 'high', 'low', 'close', 'volume']
+                        cols_to_use = [col for col in available_cols if col in df.columns]
+                        
+                        if 'volume' not in cols_to_use:
+                            df['volume'] = 0
+                            cols_to_use.append('volume')
+                        
+                        df = df[cols_to_use].copy()
+                        df['timestamp'] = df.index
+                        df = df.reset_index(drop=True)
+                        
+                        # Ensure all numeric columns are numeric
+                        for col in ['open', 'high', 'low', 'close', 'volume']:
+                            if col in df.columns:
+                                df[col] = pd.to_numeric(df[col], errors='coerce')
+                        
+                        # Remove rows with NaN values in OHLC
+                        df = df.dropna(subset=['open', 'high', 'low', 'close'])
+                        
+                        # Filter to only include data before today (to avoid duplicates with Upstox)
+                        today_date = datetime.now(self.ist).date()
+                        df = df[df['timestamp'].dt.date < today_date]
+                        
+                        if len(df) > 0:
+                            historical_data[symbol] = df
+                            if self.verbose:
+                                print(f"    ✅ Got {len(df)} bars for {symbol}")
+                        
+                    except Exception as e:
+                        # Symbol not found in batch download, skip it
+                        if self.verbose:
+                            print(f"    ⚠️  Error processing {symbol}: {e}")
+                        continue
+                
+                # Small delay between batches to avoid rate limiting
+                if batch_idx + batch_size < len(yf_symbols):
+                    import time
+                    time.sleep(1)
                     
-                    # Rename columns to lowercase
-                    df.columns = [col.lower() for col in df.columns]
-                    
-                    # Select only OHLCV columns
-                    available_cols = ['open', 'high', 'low', 'close', 'volume']
-                    cols_to_use = [col for col in available_cols if col in df.columns]
-                    
-                    if 'volume' not in cols_to_use:
-                        df['volume'] = 0
-                        cols_to_use.append('volume')
-                    
-                    df = df[cols_to_use].copy()
-                    df['timestamp'] = df.index
-                    df = df.reset_index(drop=True)
-                    
-                    # Ensure all numeric columns are numeric
-                    for col in ['open', 'high', 'low', 'close', 'volume']:
-                        if col in df.columns:
-                            df[col] = pd.to_numeric(df[col], errors='coerce')
-                    
-                    # Remove rows with NaN values in OHLC
-                    df = df.dropna(subset=['open', 'high', 'low', 'close'])
-                    
-                    # Filter to only include data before today (to avoid duplicates with Upstox)
-                    today_date = datetime.now(self.ist).date()
-                    df = df[df['timestamp'].dt.date < today_date]
-                    
-                    if len(df) > 0:
-                        historical_data[symbol] = df
-                        print(f"  Got {len(df)} bars from Yahoo Finance for {symbol} (excluding today)")
-                    
-                except Exception as e:
-                    # Symbol not found in batch download, skip it
-                    continue
-            
-            print(f"Successfully downloaded historical data for {len(historical_data)} symbols")
-            return historical_data
-            
-        except Exception as e:
-            print(f"Error in batch download from Yahoo Finance: {e}")
-            traceback.print_exc()
-            return {}
+            except Exception as e:
+                print(f"  ⚠️  Error downloading batch {batch_num}: {e}")
+                print(f"     Continuing with next batch...")
+                continue
+        
+        print(f"✅ Successfully downloaded data for {len(historical_data)}/{len(symbols)} symbols")
+        if len(historical_data) < len(symbols):
+            missing = len(symbols) - len(historical_data)
+            print(f"⚠️  {missing} symbols had no data available from Yahoo Finance")
+        
+        return historical_data
     
     async def _fetch_historical_data(
         self, 
@@ -1173,8 +1209,17 @@ class UpstoxStockSelector:
             # Detect 15-minute volume spike alerts (additional alert system)
             volume_alerts = await self._detect_15min_volume_alerts(symbol, target_date=target_date)
             
-            # Combine both alert types
-            all_alerts = alerts + volume_alerts
+            # Detect trading patterns (RSI divergence, retest patterns)
+            pattern_alerts = self.pattern_detector.detect_all_patterns(
+                df, 
+                symbol,
+                patterns=None,  # Detect all patterns
+                lookback_swing=settings.LOOKBACK_SWING,
+                rsi_period=14
+            )
+            
+            # Combine all alert types
+            all_alerts = alerts + volume_alerts + pattern_alerts
             
             # Calculate statistics (only for breakout/breakdown alerts, not volume spikes)
             stats = self._calculate_statistics(alerts, symbol)
