@@ -37,8 +37,8 @@ ENV/
 .env.local
 
 # Data files (generated)
-data/NSE.json
-data/nifty100_symbols.json
+# Note: data/NSE.json is required for Streamlit Cloud, so it's NOT ignored
+# data/nifty100_symbols.json is also required
 *.csv
 *.xlsx
 output/

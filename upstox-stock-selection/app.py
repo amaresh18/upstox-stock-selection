@@ -170,6 +170,22 @@ def load_default_values():
     # Show toast notification
     show_toast("Default values loaded! All parameters reset to system defaults.", "success")
 
+def get_secret(key: str, default: str = '') -> str:
+    """Get secret from Streamlit secrets or environment variable.
+    
+    This function checks Streamlit Cloud secrets first (for cloud deployment),
+    then falls back to environment variables (for local development).
+    """
+    try:
+        # Try Streamlit secrets first (for Streamlit Cloud)
+        if hasattr(st, 'secrets') and key in st.secrets:
+            return st.secrets[key]
+    except:
+        pass
+    # Fallback to environment variable
+    return os.getenv(key, default)
+
+
 def main():
     """Main Streamlit app with Zerodha Kite Premium design."""
     initialize_session_state()
@@ -721,10 +737,22 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
+        # Helper function to get secrets (Streamlit Cloud) or env vars
+        def get_secret(key: str, default: str = '') -> str:
+            """Get secret from Streamlit secrets or environment variable."""
+            try:
+                # Try Streamlit secrets first (for Streamlit Cloud)
+                if hasattr(st, 'secrets') and key in st.secrets:
+                    return st.secrets[key]
+            except:
+                pass
+            # Fallback to environment variable
+            return os.getenv(key, default)
+        
         # Initialize OAuth helper
-        default_api_key = os.getenv('UPSTOX_API_KEY', 'e3d3c1d1-5338-4efa-b77f-c83ea604ea43')
-        default_api_secret = os.getenv('UPSTOX_API_SECRET', '9kbfgnlibw')
-        default_redirect_uri = os.getenv('UPSTOX_REDIRECT_URI', 'https://127.0.0.1')
+        default_api_key = get_secret('UPSTOX_API_KEY', 'e3d3c1d1-5338-4efa-b77f-c83ea604ea43')
+        default_api_secret = get_secret('UPSTOX_API_SECRET', '9kbfgnlibw')
+        default_redirect_uri = get_secret('UPSTOX_REDIRECT_URI', 'https://127.0.0.1')
         
         # OAuth configuration inputs
         oauth_col1, oauth_col2 = st.columns([3, 1])
@@ -935,19 +963,19 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
             with col1:
                 api_key = st.text_input(
                     "Upstox API Key",
-                    value=os.getenv('UPSTOX_API_KEY', ''),
+                    value=get_secret('UPSTOX_API_KEY', ''),
                     key="manual_api_key",
-                    help="Your Upstox API Key",
+                    help="Your Upstox API Key (or set in Streamlit Cloud Secrets)",
                     placeholder="Enter your API key"
                 )
             
             with col2:
                 access_token = st.text_input(
                     "Upstox Access Token",
-                    value=os.getenv('UPSTOX_ACCESS_TOKEN', ''),
+                    value=get_secret('UPSTOX_ACCESS_TOKEN', ''),
                     key="manual_access_token",
                     type="password",
-                    help="Your Upstox Access Token",
+                    help="Your Upstox Access Token (or set in Streamlit Cloud Secrets)",
                     placeholder="Enter your access token"
                 )
             
@@ -965,16 +993,17 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                 else:
                     st.error("❌ Please provide both API Key and Access Token")
         
-        # Use OAuth token if available, otherwise use manual input
+        # Use OAuth token if available, otherwise use manual input, then secrets/env
         if 'oauth_access_token' in st.session_state:
             access_token = st.session_state.oauth_access_token
             api_key = st.session_state.get('saved_oauth_api_key', '')
         elif 'manual_api_key' in st.session_state and st.session_state.manual_api_key:
             api_key = st.session_state.manual_api_key
-            access_token = st.session_state.manual_access_token if 'manual_access_token' in st.session_state else os.getenv('UPSTOX_ACCESS_TOKEN', '')
+            access_token = st.session_state.manual_access_token if 'manual_access_token' in st.session_state else get_secret('UPSTOX_ACCESS_TOKEN', '')
         else:
-            api_key = os.getenv('UPSTOX_API_KEY', '')
-            access_token = os.getenv('UPSTOX_ACCESS_TOKEN', '')
+            # Try Streamlit secrets first (for Streamlit Cloud), then env vars
+            api_key = get_secret('UPSTOX_API_KEY', '')
+            access_token = get_secret('UPSTOX_ACCESS_TOKEN', '')
         
         # Store credentials in session state for use in Analysis tab
         st.session_state.current_api_key = api_key
@@ -1133,6 +1162,8 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                                 target_date = st.session_state.get('selected_date', None)
                                 
                                 # Run analysis
+                                st.info("🔄 Starting analysis... This may take a few minutes.")
+                                
                                 summary_df, alerts_df = asyncio.run(
                                     selector.analyze_symbols(
                                         symbols,
@@ -1141,6 +1172,29 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                                         target_date=target_date
                                     )
                                 )
+                                
+                                # Diagnostic information
+                                st.info(f"📊 Analysis completed:")
+                                st.info(f"   - Summary records: {len(summary_df) if summary_df is not None and not summary_df.empty else 0}")
+                                st.info(f"   - Alert records: {len(alerts_df) if alerts_df is not None and not alerts_df.empty else 0}")
+                                
+                                # Check if results are empty and provide helpful diagnostics
+                                if (alerts_df is None or alerts_df.empty) and (summary_df is None or summary_df.empty):
+                                    st.warning("⚠️ No results found. Possible reasons:")
+                                    st.markdown("""
+                                    - **Market hours**: Analysis might be running outside market hours (9:15 AM - 3:30 PM IST)
+                                    - **Date filter**: Selected date might not have any trading activity
+                                    - **Strict filters**: Pattern metrics or other filters might be too restrictive
+                                    - **API issues**: Check if API credentials are valid and have proper permissions
+                                    - **Data availability**: Historical data might not be available for the selected period
+                                    
+                                    **Try these steps:**
+                                    1. Check if you're running during market hours (9:15 AM - 3:30 PM IST)
+                                    2. Try unchecking some pattern metric filters in the sidebar
+                                    3. Increase historical days to get more data
+                                    4. Try a different date (use "Include Historical Alerts" option)
+                                    5. Verify your API credentials are correct
+                                    """)
                                 
                                 # Verify settings were actually used (read them back)
                                 actual_settings = {
@@ -1169,11 +1223,15 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
                                 )
                                 
                                 if settings_match:
-                                    show_toast(f"Analysis complete! Found {len(alerts_df)} alerts.", "success")
-                                    st.success(f"✅ Analysis complete! Found {len(alerts_df)} alerts using the configured parameters.")
+                                    if alerts_df is not None and not alerts_df.empty:
+                                        show_toast(f"Analysis complete! Found {len(alerts_df)} alerts.", "success")
+                                        st.success(f"✅ Analysis complete! Found {len(alerts_df)} alerts using the configured parameters.")
+                                    else:
+                                        show_toast("Analysis complete but no alerts found.", "info")
+                                        st.info(f"ℹ️ Analysis complete but no alerts found. Try adjusting filters or checking market hours.")
                                 else:
                                     show_toast("Analysis complete, but settings verification failed!", "warning")
-                                    st.warning(f"⚠️ Analysis complete with {len(alerts_df)} alerts, but settings verification failed!")
+                                    st.warning(f"⚠️ Analysis complete with {len(alerts_df) if alerts_df is not None and not alerts_df.empty else 0} alerts, but settings verification failed!")
                                     st.warning(f"Requested: {st.session_state.params}")
                                     st.warning(f"Actual: {actual_settings}")
                                 
@@ -1202,13 +1260,52 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
             )
             
             results = st.session_state.results
-            summary_df = results['summary']
-            alerts_df = results['alerts']
+            summary_df = results.get('summary', pd.DataFrame())
+            alerts_df = results.get('alerts', pd.DataFrame())
+            
+            # Ensure DataFrames are not None
+            if summary_df is None:
+                summary_df = pd.DataFrame()
+            if alerts_df is None:
+                alerts_df = pd.DataFrame()
             
             # Display configuration used for this analysis
             if 'actual_settings' in results:
                 with st.expander("📋 Configuration Used for This Analysis", expanded=False):
                     st.json(results['actual_settings'])
+            
+            # Show diagnostic information if no results
+            if alerts_df.empty and summary_df.empty:
+                st.warning("⚠️ **No Results Found**")
+                with st.expander("🔍 Diagnostic Information", expanded=True):
+                    st.markdown("""
+                    **Analysis completed but no alerts were generated.**
+                    
+                    **Possible reasons:**
+                    1. **Market Hours**: Analysis might be outside market hours (9:15 AM - 3:30 PM IST)
+                    2. **Date Selection**: Selected date might not have trading activity
+                    3. **Strict Filters**: Pattern metrics or filters might be too restrictive
+                    4. **No Patterns Detected**: No patterns matched the criteria for the selected symbols
+                    5. **Data Issues**: Historical data might not be available
+                    
+                    **Troubleshooting Steps:**
+                    - ✅ Check if you're running during market hours
+                    - ✅ Try unchecking some pattern metric filters in the sidebar
+                    - ✅ Increase "Historical Days" to get more data
+                    - ✅ Try enabling "Include Historical Alerts" to see past results
+                    - ✅ Verify API credentials are valid
+                    - ✅ Check if symbols are being loaded correctly
+                    """)
+                    
+                    # Show current filter settings
+                    st.markdown("**Current Filter Settings:**")
+                    filter_info = {
+                        "Include Historical": st.session_state.get('include_historical', False),
+                        "Only Recent Candle": st.session_state.get('only_recent_candle', True),
+                        "Pattern Only": st.session_state.get('pattern_only', False),
+                        "Price Momentum Threshold": st.session_state.params.get('price_momentum_threshold', 0.0),
+                    }
+                    st.json(filter_info)
             
             # Get filter settings from session state (set in sidebar)
             include_historical = st.session_state.get('include_historical', False)

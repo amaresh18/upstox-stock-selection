@@ -494,27 +494,35 @@ Contributions are welcome! Please ensure:
 
 ## Cloud Deployment
 
-Want to run this 24/7 without keeping your laptop on? Deploy to the cloud!
+### 🚀 Streamlit Cloud (Recommended - FREE & Easiest for UI)
 
-See **[Cloud Deployment Guide](docs/CLOUD_DEPLOYMENT.md)** for detailed instructions on deploying to:
-- **Railway** (Recommended - Free tier available)
+**Perfect for deploying the Streamlit UI app!**
+
+**Quick Start:**
+1. Push your code to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Sign in with GitHub
+4. Click "New app" → Select your repo → Set main file: `app.py`
+5. Add secrets (API credentials) in Settings → Secrets
+6. Deploy! Your app will be live at `https://your-app.streamlit.app`
+
+**Detailed Guide**: See [Streamlit Cloud Deployment Guide](STREAMLIT_CLOUD_DEPLOYMENT.md) for complete instructions.
+
+**Quick Reference**: See [Streamlit Cloud Quick Start](STREAMLIT_CLOUD_QUICK_START.md) for a 5-minute setup.
+
+### 📊 Other Deployment Options (For Scheduled Scripts)
+
+Want to run scheduled alert scripts 24/7? See **[Cloud Deployment Guide](docs/CLOUD_DEPLOYMENT.md)** for deploying backend scripts to:
+- **Railway** (Free tier available - for scheduled scripts)
 - **Render** (Free tier available)
 - **Fly.io** (Free tier available)
 - **AWS EC2** (Free tier for 12 months)
 - **Google Cloud Run** (Pay per use)
 - **Heroku** (Paid - $7/month)
 
-**Quick Start (Railway - Easiest):**
-1. Sign up at [railway.app](https://railway.app)
-2. Create new project from GitHub repo
-3. Add environment variables (API keys, tokens)
-4. Deploy - it runs automatically!
+**Railway Guide**: See [Railway Deployment Guide](docs/RAILWAY_DEPLOYMENT.md) for step-by-step instructions (useful for running scheduled alert scripts).
 
-**Detailed Railway Guide**: See [Railway Deployment Guide](docs/RAILWAY_DEPLOYMENT.md) for step-by-step instructions.
-
-**Monitoring Railway**: See [Railway Monitoring Guide](docs/RAILWAY_MONITORING.md) to verify the script is running at scheduled times.
-
-The script will run 24/7 in the cloud and send Telegram notifications when alerts are detected.
+**Note**: Streamlit Cloud is perfect for the interactive UI app. For 24/7 scheduled alert monitoring, Railway or other services are better suited.
 
 ## Support
 
