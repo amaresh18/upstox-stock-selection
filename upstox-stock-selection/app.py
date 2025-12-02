@@ -1378,6 +1378,43 @@ UPSTOX_ACCESS_TOKEN={access_token_new}"""
             else:
                 pattern_alerts_df = pd.DataFrame()
                 legacy_alerts_df = alerts_df.copy()
+
+            # Notify when new pattern stocks are added compared to previous run
+            try:
+                # Build a simple identifier per pattern alert (symbol + pattern_type)
+                if not pattern_alerts_df.empty:
+                    pattern_alerts_df['__pattern_key__'] = pattern_alerts_df.apply(
+                        lambda r: f"{r.get('symbol', '')}::{r.get('pattern_type', '')}", axis=1
+                    )
+                    current_pattern_keys = sorted(pattern_alerts_df['__pattern_key__'].unique().tolist())
+                else:
+                    current_pattern_keys = []
+
+                # Previous keys stored in session_state (from last successful analysis)
+                prev_pattern_keys = st.session_state.get('pattern_keys', [])
+
+                # Compute newly added pattern stocks
+                new_pattern_keys = [k for k in current_pattern_keys if k not in prev_pattern_keys]
+
+                if new_pattern_keys:
+                    # Extract unique symbols for user-friendly message
+                    new_symbols = sorted({k.split("::")[0] for k in new_pattern_keys if k})
+                    if new_symbols:
+                        msg = f"🆕 {len(new_symbols)} new stock(s) added to pattern matches: {', '.join(new_symbols[:10])}"
+                        if len(new_symbols) > 10:
+                            msg += f" … (+{len(new_symbols) - 10} more)"
+                        show_toast(msg, "success")
+                        st.success(msg)
+
+                # Update session state for next run
+                st.session_state.pattern_keys = current_pattern_keys
+
+                # Clean up helper column if it exists
+                if '__pattern_key__' in pattern_alerts_df.columns:
+                    pattern_alerts_df = pattern_alerts_df.drop(columns=['__pattern_key__'])
+            except Exception:
+                # Fail silently if anything goes wrong; this is a non-critical UX enhancement
+                pass
             
             # Helper function to analyze volume trend during pattern formation
             def has_volume_trend_confirmation(row: pd.Series, pattern_type: str) -> bool:
