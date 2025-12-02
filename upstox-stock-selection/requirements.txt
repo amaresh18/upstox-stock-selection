@@ -1,13 +1,15 @@
 # Core dependencies for Upstox Stock Selection
-aiohttp==3.9.1
-pandas==2.1.4
-numpy==1.25.2
-pytz==2023.3
-yfinance==0.2.28
-streamlit==1.28.0
-requests==2.31.0
-scipy==1.11.4
+# Updated for Python 3.11+ compatibility (including Python 3.13 on Streamlit Cloud)
+# Using minimum versions to allow pip to resolve best compatible versions with pre-built wheels
+
+aiohttp>=3.9.1
+pandas>=2.2.0
+numpy>=1.26.0
+pytz>=2024.1
+yfinance>=0.2.28
+streamlit>=1.28.0
+requests>=2.31.0
+scipy>=1.11.0
 
 # Telegram notifications (optional)
 # Note: aiohttp is already included above and used for Telegram API calls
-
