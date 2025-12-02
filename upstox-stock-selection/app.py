@@ -25,8 +25,12 @@ from src.config.settings import (
     DEFAULT_HISTORICAL_DAYS,
     DEFAULT_INTERVAL,
     DEFAULT_MAX_WORKERS,
-    DEFAULT_NSE_JSON_PATH,
+    DEFAULT_NSE_JSON_PATH as SETTINGS_NSE_JSON_PATH,
 )
+
+# Resolve NSE.json path relative to this app's directory so it works on Streamlit Cloud
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_NSE_JSON_PATH = os.path.join(APP_ROOT, "data", "NSE.json")
 from src.utils.oauth_helper import UpstoxOAuthHelper
 from src.ui.components import (
     render_navbar,
